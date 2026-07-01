@@ -1,0 +1,292 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <Wire.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <MAX30105.h>
+#include <heartRate.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <LiquidCrystal_I2C.h>
+
+#define BUZZER_PIN 25
+#define ONE_WIRE_BUS 4
+
+const char* WIFI_SSID = "AAA";         
+const char* WIFI_PASSWORD = "12345678"; 
+
+const char* serverUrl = "https://api.orcagroup.top/health/send";
+
+// الأجهزة
+Adafruit_MPU6050 mpu;
+MAX30105 particleSensor;
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature ds18b20(&oneWire);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+const byte RATE_SIZE = 4;
+byte rates[RATE_SIZE];
+byte rateSpot = 0;
+long lastBeat = 0;
+float bpmValue = 0;
+int beatAvg = 0;
+float ema_spo2 = 98.0;
+bool fingerDetected = false;
+float cachedTemp = 30.0;
+float baselineTemp = -999.0;
+bool baselineCaptured = false;
+String bodyState = "STABLE";
+
+unsigned long lastHealthSend = 0;
+unsigned long lastTempUpdate = 0;
+unsigned long lastUpdate = 0;
+
+#define FINGER_THRESHOLD 7000
+
+// =============================================================================
+
+void WiFiEvent(WiFiEvent_t event) {
+  switch (event) {
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+      Serial.println("\nWiFi Connected! IP: ");
+      Serial.println(WiFi.localIP());
+      break;
+    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+      Serial.println("\nWiFi Disconnected! Reconnecting...");
+      WiFi.reconnect();
+      break;
+    default:
+      break;
+  }
+}
+
+// =============================================================================
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("System Loading..");
+
+  Wire.begin(21, 22);
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+
+  if (!mpu.begin()) {
+    Serial.println("[ERROR] MPU6050 not found!");
+    lcd.setCursor(0, 1); lcd.print("MPU Error! ");
+  } else {
+    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+    Serial.println("[OK] MPU6050 ready");
+  }
+
+  if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
+    Serial.println("[ERROR] MAX30102 not found!");
+    lcd.setCursor(0, 1); lcd.print("MAX Error! ");
+  } else {
+    particleSensor.setup(0x1F, 1, 2, 400, 215, 16384);
+    particleSensor.setPulseAmplitudeRed(0x1F);
+    particleSensor.setPulseAmplitudeIR(0x1F);
+    Serial.println("[OK] MAX30102 ready");
+  }
+
+  ds18b20.begin();
+  ds18b20.setWaitForConversion(false);
+  ds18b20.requestTemperatures();
+  Serial.println("[OK] DS18B20 ready");
+
+  for (byte i = 0; i < RATE_SIZE; i++) rates[i] = 0;
+  lastBeat = millis();
+
+  WiFi.onEvent(WiFiEvent);
+  connectWiFi();
+
+  delay(500);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Place finger.. ");
+}
+
+// =============================================================================
+void loop() {
+  // قراءة السنسورات (نفس الكود القديم)
+  long irValue = particleSensor.getIR();
+  long redValue = particleSensor.getRed();
+
+  if (irValue > FINGER_THRESHOLD) {
+    fingerDetected = true;
+    if (checkForBeat(irValue)) {
+      long now = millis();
+      long delta = now - lastBeat;
+      lastBeat = now;
+      if (delta > 333 && delta < 2000) {
+        bpmValue = 60000.0 / (float)delta;
+        rates[rateSpot++] = (byte)bpmValue;
+        rateSpot %= RATE_SIZE;
+        int sum = 0, count = 0;
+        for (byte x = 0; x < RATE_SIZE; x++) {
+          if (rates[x] > 0) { sum += rates[x]; count++; }
+        }
+        if (count > 0) beatAvg = sum / count;
+      }
+    }
+    if (redValue > 1000 && irValue > 1000) {
+      double ratio = (double)redValue / (double)irValue;
+      float current_spo2 = -45.060f * ratio * ratio + 30.354f * ratio + 94.845f;
+      current_spo2 = constrain(current_spo2, 80.0f, 100.0f);
+      ema_spo2 = (current_spo2 * 0.3f) + (ema_spo2 * 0.7f);
+    }
+  } else {
+    if (fingerDetected) {
+      Serial.println("[INFO] Finger removed - resetting...");
+      fingerDetected = false;
+    }
+    beatAvg = 0;
+    bpmValue = 0;
+    ema_spo2 = 98.0f;
+    rateSpot = 0;
+    for (byte i = 0; i < RATE_SIZE; i++) rates[i] = 0;
+    lastBeat = millis();
+  }
+
+  sensors_event_t a, g, temp_mpu;
+  mpu.getEvent(&a, &g, &temp_mpu);
+  float ax = a.acceleration.x;
+  float ay = a.acceleration.y;
+  float az = a.acceleration.z;
+
+  float magnitude = sqrt(ax*ax + ay*ay + az*az);
+  float diff = fabs(magnitude - 9.8);
+
+  if (diff < 0.8) {
+    bodyState = "STANDING";
+  }
+  else if (diff < 2.0) {
+    bodyState = "STABLE";
+  }
+  else if (diff < 4.0) {
+    bodyState = "UNSTABLE";
+  }
+  else {
+    bodyState = "FALL";
+  }
+
+  if (bodyState == "FALL" || bodyState == "UNSTABLE") {
+    digitalWrite(BUZZER_PIN, HIGH);
+  } else {
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+
+  if (millis() - lastTempUpdate >= 2000) {
+    float rawTemp = ds18b20.getTempCByIndex(0);
+    if (rawTemp != DEVICE_DISCONNECTED_C && rawTemp > -40 && rawTemp < 85) {
+      if (!baselineCaptured) {
+        baselineTemp = rawTemp;
+        baselineCaptured = true;
+      }
+      float delta = rawTemp - baselineTemp;
+      cachedTemp = 30.0 + delta;
+      cachedTemp = constrain(cachedTemp, 0.0, 60.0);
+    }
+    ds18b20.requestTemperatures();
+    lastTempUpdate = millis();
+  }
+
+  // عرض على الـ LCD + Serial (كل ثانية)
+  if (millis() - lastUpdate >= 1000) {
+    lcdDisplay();
+    lastUpdate = millis();
+  }
+
+
+  if (WiFi.status() == WL_CONNECTED && millis() - lastHealthSend >= 1000) {
+    sendHealthData();
+    lastHealthSend = millis();
+  }
+}
+
+// =============================================================================
+void connectWiFi() {
+  Serial.printf("Connecting to WiFi: %s ", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  int tries = 0;
+  while (WiFi.status() != WL_CONNECTED && tries < 40) {
+    delay(500);
+    Serial.print(".");
+    tries++;
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nConnected successfully");
+    Serial.print("IP: "); Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nFailed to connect - will retry automatically");
+  }
+}
+
+// =============================================================================
+void sendHealthData() {
+  HTTPClient http;
+  if (!http.begin(serverUrl)) {
+    Serial.println("HTTP begin failed");
+    return;
+  }
+
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<512> doc;
+  doc["bpm"] = beatAvg;
+  doc["spo2"] = (int)ema_spo2;
+  doc["temperature"] = cachedTemp;
+  doc["body_state"] = bodyState;
+  doc["finger_detected"] = fingerDetected;
+  doc["timestamp"] = millis();
+
+  String jsonString;
+  serializeJson(doc, jsonString);
+
+  Serial.print("Sending: ");
+  Serial.println(jsonString);
+
+  int httpCode = http.POST(jsonString);
+
+  if (httpCode > 0) {
+    String response = http.getString();
+    Serial.printf("Server Response (%d): %s\n", httpCode, response.c_str());
+  } else {
+    Serial.printf("POST failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+
+  http.end();
+}
+
+// =============================================================================
+void lcdDisplay() {
+  lcd.setCursor(0, 0);
+  if (fingerDetected) {
+    lcd.print("B:");
+    lcd.print(beatAvg < 100 ? " " : "");
+    lcd.print(beatAvg);
+    lcd.print(" O:");
+    lcd.print((int)ema_spo2);
+    lcd.print("% T:");
+    lcd.print(cachedTemp, 1);
+    lcd.print("C");
+  } else {
+    lcd.print("Place finger... ");
+  }
+
+  lcd.setCursor(0, 1);
+  lcd.print("STATE:");
+  lcd.print(bodyState);
+  lcd.print("   ");
+
+  // Serial Print
+  Serial.printf("BPM:%d | SpO2:%d%% | Temp:%.1fC | State:%s | Finger:%s\n",
+                beatAvg, (int)ema_spo2, cachedTemp, bodyState.c_str(), fingerDetected ? "YES" : "NO");
+}

@@ -1,0 +1,33 @@
+<!-- Modification Request Modal -->
+<div class="modal fade" id="modifyModal" tabindex="-1" aria-labelledby="modifyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header bg-warning text-dark border-0">
+                <h5 class="modal-title fw-bold" id="modifyModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Request Modification
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('pharmacist.request_modification', prescription_id=prescription.id) }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Original Medication</label>
+                        <input type="text" id="original_medication" name="original_medication" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Proposed Alternative & Reason</label>
+                        <textarea name="reason" class="form-control" rows="4" placeholder="e.g., Alternative: Drug X 500mg - Out of stock." required></textarea>
+                        <input type="hidden" name="proposed_medications" value="See reason">
+                    </div>
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle me-1"></i> This request will be sent to the doctor for approval.
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Send Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .doctor-card {
+        border-radius: 15px;
+        border: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+    .doctor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .doctor-avatar {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="row">
+    <!-- Header with Standard Back Button -->
+    <div class="col-12 mb-4">
+        <div class="card p-4 shadow-sm border-0 adaptive-bg" style="border-radius: 20px;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0 fw-bold adaptive-text"><i class="bi bi-search me-2 text-primary"></i>Find a
+                        Specialist</h3>
+                    <p class="adaptive-muted mb-0">Search and book appointments with top specialists</p>
+                </div>
+                <!-- Back to Dashboard Button -->
+                <a href="{{ url_for('patient.dashboard') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-arrow-left me-2"></i><span class="text-dark fw-bold">Back to Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="col-lg-3 mb-4">
+        <div class="card p-4 h-100 adaptive-bg" style="border-radius: 15px;">
+            <h5 class="mb-3 adaptive-text"><i class="bi bi-funnel-fill me-2 text-primary"></i>Filters</h5>
+            <form action="{{ url_for('booking.search') }}" method="GET">
+                <div class="mb-3">
+                    <label class="form-label fw-bold adaptive-text">Specialty</label>
+                    <select name="specialty" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Specialties</option>
+                        {% for s in specialties %}
+                        <option value="{{ s }}" {% if request.args.get('specialty')==s %}selected{% endif %}>
+                            {{ s }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Doctor Listings -->
+    <div class="col-lg-9">
+        {% if doctors %}
+        <div class="row">
+            {% for doc in doctors %}
+            <div class="col-12 mb-4">
+                <div class="card h-100 border-0 shadow-sm doctor-card adaptive-bg" style="border-radius: 20px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="position-relative">
+                                <img src="{{ url_for('static', filename='images/doctors/' + doc.profile_image) }}"
+                                    class="rounded-circle border" width="70" height="70"
+                                    onerror="this.src='{{ url_for('static', filename='images/default_doctor.png') }}'">
+                                <span
+                                    class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle p-2"></span>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-0 fw-bold adaptive-text">Dr. {{ doc.name }}</h5>
+                                <p class="adaptive-muted mb-0 small">{{ doc.specialty }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Doctor Details -->
+                        <div class="mb-3">
+                            <p class="adaptive-muted mb-2">{{ doc.bio or 'Experienced Medical Specialist' }}</p>
+
+                            <div class="d-flex flex-wrap gap-3 adaptive-muted small">
+                                <span>
+                                    <i class="bi bi-stethoscope me-1 text-info"></i>
+                                    <strong>{{ doc.specialty }}</strong>
+                                </span>
+                                <span>
+                                    <i class="bi bi-geo-alt-fill me-1 text-danger"></i>
+                                    {{ doc.location }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-people-fill me-1 text-success"></i>
+                                    {{ doc.total_patients }} Patients
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Booking Section -->
+                        <div class="text-center mt-auto pt-3 border-top">
+                            <div class="bg-light p-3 rounded-3 mb-3">
+                                <div class="adaptive-muted small">Consultation Fee</div>
+                                <h3 class="text-success fw-bold mb-0">{{ doc.price }} EGP</h3>
+                            </div>
+
+                            <button class="btn btn-danger w-100 rounded-pill fw-bold mb-2" data-bs-toggle="modal"
+                                data-bs-target="#bookingModal{{ doc.id }}">
+                                <i class="bi bi-calendar-check me-1"></i>Book & Pay Now
+                            </button>
+
+                            <a href="{{ url_for('booking.doctor_profile', doctor_id=doc.id) }}"
+                                class="btn btn-outline-primary w-100 rounded-pill fw-bold mb-2">
+                                <i class="bi bi-person-circle me-1"></i>Show Profile & Reviews
+                            </a>
+
+                            <div class="adaptive-muted small">
+                                <i class="bi bi-clock me-1"></i>Available slots today
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Modal for each doctor -->
+            <div class="modal fade" id="bookingModal{{ doc.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                        <div class="modal-header border-0 bg-primary text-white" style="border-radius: 20px 20px 0 0;">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="text-center mb-4">
+                                <img src="{{ url_for('static', filename='images/doctors/' + doc.profile_image) }}"
+                                    class="rounded-circle mb-2" width="80" height="80"
+                                    onerror="this.src='{{ url_for('static', filename='images/default_doctor.png') }}'">
+                                <h5 class="fw-bold">Dr. {{ doc.name }}</h5>
+                                <p class="text-muted small">{{ doc.specialty }}</p>
+                            </div>
+
+                            <form id="bookingForm{{ doc.id }}"
+                                onsubmit="bookAppointment(event, {{ doc.id }}, {{ doc.price }})">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Date & Time</label>
+                                    <select name="date" class="form-select form-select-lg" required>
+                                        <option value="" selected disabled>Choose appointment slot</option>
+                                        {% for slot in doc.slots %}
+                                        <option value="{{ slot.datetime }}">{{ slot.display }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Payment Method</label>
+                                    <select name="payment_method" class="form-select" required>
+                                        <option value="card">Credit/Debit Card</option>
+                                        <option value="cash">Cash at Clinic</option>
+                                    </select>
+                                </div>
+
+                                <div class="alert alert-info border-0">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Total Amount:</strong> {{ doc.price }} EGP
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">
+                                    <i class="bi bi-check-circle me-1"></i>Confirm & Pay
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card p-5 text-center" style="border-radius: 15px;">
+            <i class="bi bi-search display-1 text-muted opacity-25"></i>
+            <h4 class="mt-3 text-muted">No doctors found matching your criteria.</h4>
+            <p class="text-muted">Try adjusting your filters or search again.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    async function bookAppointment(event, doctorId, price) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const date = formData.get('date');
+        const paymentMethod = formData.get('payment_method');
+
+        try {
+            // Create appointment
+            const bookingResponse = await fetch("{{ url_for('booking.book_appointment') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    doctor_id: doctorId,
+                    date: date,
+                    payment_method: paymentMethod
+                })
+            });
+
+            const text = await bookingResponse.text();
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                console.error('Booking response parse error:', e);
+                console.error('Response text:', text);
+                alert('Server Error: ' + text.substring(0, 150) + '...');
+                return;
+            }
+
+            if (!bookingResponse.ok || !result.success) {
+                throw new Error(result.message || 'Booking failed');
+            }
+
+            if (result.payment_required) {
+                // Redirect to payment page
+                window.location.href = result.redirect_url;
+            } else {
+                // Close modal
+                const modalElement = document.getElementById('bookingModal' + doctorId);
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                } else {
+                    const newModal = new bootstrap.Modal(modalElement);
+                    newModal.hide();
+                }
+
+                // Show success message
+                alert('✅ ' + result.message);
+                if (result.chat_url) {
+                    window.location.href = result.chat_url;
+                } else {
+                    window.location.href = '/patient/dashboard';
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('❌ Error: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

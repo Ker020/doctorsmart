@@ -1,0 +1,24 @@
+[Unit]
+Description=Smart Healthcare Flask Application
+After=network.target mariadb.service ollama.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/html/smart_healthcare_web/
+Environment="PATH=~/my_env/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="DB_USER=root"
+Environment="DB_PASSWORD=Ahmed@3300805"
+Environment="DB_HOST=127.0.0.1"
+Environment="DB_PORT=3306"
+Environment="DB_NAME=doctor_bot"
+Environment="LLM_URL=http://127.0.0.1:11434/v1/chat/completions"
+Environment="MODEL_NAME=qwen2.5:7b"
+Environment="SECRET_KEY=bcb1a40d98030f0b18c84816e28108e903f1228b4f1aa6c1e02107afaca89b21"
+ExecStart=/home/ahmed-shreif/my_env/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 --timeout 600 wsgi:app
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <a href="{{ url_for('pharmacist.dashboard') }}" class="btn btn-outline-light rounded-pill mb-3">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="card p-4 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold mb-1"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Patient
+                        Prescriptions</h4>
+                    <p class="text-muted mb-0">Patient: <span class="fw-bold">{{ patient.user.name }}</span> (ID: {{
+                        patient.id }})</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success rounded-pill px-3 py-2">
+                        <i class="bi bi-qr-code-scan me-1"></i>QR Access Granted
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if prescriptions %}
+        <div class="row g-4">
+            {% for pres in prescriptions %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px; transition: transform 0.2s;">
+                    <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="fw-bold mb-1">Prescription #{{ pres.id }}</h6>
+                                <small class="text-muted">{{ pres.created_at.strftime('%Y-%m-%d %I:%M %p') }}</small>
+                            </div>
+                            <span
+                                class="badge {% if pres.status == 'active' %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+                                {{ pres.status.capitalize() }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body px-4">
+                        <hr class="my-3 opacity-25">
+                        <div class="mb-3">
+                            <small class="text-muted d-block fw-bold mb-1">DOCTOR</small>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='images/doctors/' + pres.doctor.profile_image) }}"
+                                    class="rounded-circle me-2" width="30" height="30"
+                                    onerror="this.src='{{ url_for('static', filename='images/default_doctor.png') }}'">
+                                <span>Dr. {{ pres.doctor.user.name }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block fw-bold mb-1">MEDICATIONS</small>
+                            <ul class="list-unstyled mb-0">
+                                {% for med in pres.medications[:2] %}
+                                <li class="text-truncate"><i class="bi bi-capsule me-2 text-primary"></i>{{ med.name }}
+                                    {{ med.dosage }}</li>
+                                {% endfor %}
+                                {% if pres.medications|length > 2 %}
+                                <li class="text-muted small ps-4">+ {{ pres.medications|length - 2 }} more...</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0 px-4 pb-4 pt-0">
+                        <a href="{{ url_for('pharmacist.view_prescription', prescription_id=pres.id) }}"
+                            class="btn btn-primary w-100 rounded-pill">
+                            <i class="bi bi-eye me-2"></i>View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card p-5 text-center border-dashed">
+            <div class="text-muted">
+                <i class="bi bi-file-medical display-4 mb-3 d-block opacity-50"></i>
+                <h5>No Prescriptions Found</h5>
+                <p>This patient has no prescription history.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

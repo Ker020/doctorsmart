@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    /* =========================
+   Premium Dashboard Styles
+   ========================= */
+    .dashboard-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 20px rgba(13, 110, 253, 0.2);
+    }
+
+    .feature-card {
+        border: none;
+        border-radius: 15px;
+        background: #fff;
+        transition: transform .3s ease, box-shadow .3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, .05);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, .1);
+    }
+
+    .probability-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e9ecef;
+    }
+
+    .probability-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #20c997, #0d6efd);
+    }
+
+    .doctor-card {
+        border-left: 4px solid #0d6efd;
+        background: #f8f9fa;
+    }
+
+    .risk-badge-High {
+        background: #dc3545;
+        color: #fff
+    }
+
+    .risk-badge-Medium {
+        background: #ffc107;
+        color: #000
+    }
+
+    .risk-badge-Low {
+        background: #198754;
+        color: #fff
+    }
+</style>
+
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- ================= Welcome ================= -->
+        <!-- Header -->
+        <div class="col-12 mb-4">
+            <div class="card p-4 adaptive-bg shadow-sm" style="border-radius: 15px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="adaptive-text mb-1"><i class="bi bi-person-badge-fill me-2"></i>Patient Dashboard
+                        </h2>
+                        <p class="adaptive-muted mb-0">Your Health & Medical Records</p>
+                    </div>
+                    <div>
+                        <span class="badge bg-success px-3 py-2"><i class="bi bi-circle-fill me-1"
+                                style="font-size: 8px;"></i>Active Profile</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= AI Assistant ================= -->
+        <a href="{{ url_for('ai.patient_ai') }}" class="text-decoration-none">
+            <div class="card feature-card p-4 mb-4 bg-dark text-white"
+                style="background:linear-gradient(135deg,#1a1a2e,#16213e)">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h3 class="fw-bold">AI Health Assistant</h3>
+                        <p class="text-white-50 mb-0">Check symptoms & get insights</p>
+                    </div>
+                    <i class="bi bi-robot display-5 text-info"></i>
+                </div>
+                <span class="btn btn-info rounded-pill mt-3 fw-bold">
+                    Ask AI Now <i class="bi bi-arrow-right ms-2"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- ================= Analysis & Alerts ================= -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <a href="{{ url_for('patient.analysis_history') }}" class="text-decoration-none">
+                    <div class="card feature-card p-4 overflow-hidden border-0 shadow-lg position-relative"
+                        style="background: linear-gradient(135deg, #0d6efd 0%, #00d2ff 100%); min-height: 200px;">
+                        <div class="position-absolute top-0 end-0 p-4 opacity-25">
+                            <i class="bi bi-robot display-1 text-white"></i>
+                        </div>
+                        <div class="position-relative z-1 text-white">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                                    <i class="bi bi-shield-check fs-2"></i>
+                                </div>
+                                <div>
+                                    <h3 class="fw-bold mb-0">Analysis & Alerts</h3>
+                                    <span class="badge bg-white text-primary rounded-pill px-3">AI Powered</span>
+                                </div>
+                            </div>
+                            <p class="fs-5 mb-4 opacity-90">View your comprehensive health history, risk scores, and
+                                detailed AI insights from your lab reports.</p>
+                            <div class="btn btn-light rounded-pill px-4 fw-bold">
+                                View Full History <i class="bi bi-arrow-right ms-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- ================= Actions ================= -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-7">
+                <div class="card feature-card p-4 h-100">
+                    <h5 class="fw-bold mb-3">Quick Actions</h5>
+
+                    <a href="{{ url_for('booking.search') }}" class="btn btn-danger py-3 px-4 mb-3 fw-bold text-start"
+                        style="background:linear-gradient(45deg,#ff416c,#ff4b2b)">
+                        <i class="bi bi-calendar-check fs-4 me-3"></i> Find & Book Doctor
+                    </a>
+
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-outline-primary flex-fill" data-bs-toggle="modal"
+                            data-bs-target="#uploadModal">
+                            <i class="bi bi-upload d-block fs-4"></i> Upload
+                        </button>
+
+                        <a href="{{ url_for('medical.records') }}"
+                            class="btn btn-outline-primary flex-fill text-center">
+                            <i class="bi bi-folder2-open d-block fs-4"></i> Records
+                        </a>
+                    </div>
+
+
+                    <br>
+            <div class="col-12 mb-2 mt-3">
+                <a href="{{ url_for('patient.vital_signs') }}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm p-3 text-white text-center"
+                        style="background: linear-gradient(135deg, #20c997, #198754); ">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-heart-pulse-fill fs-3 me-3"></i>
+                            <h5 class="fw-bold mb-0">Live Vital Signs</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card feature-card p-4 h-100 bg-primary text-white text-center">
+                    <i class="bi bi-qr-code-scan display-4 opacity-50 mb-2"></i>
+                    <h5 class="fw-bold">My Medical ID</h5>
+                    <p class="small opacity-75">Secure access for doctors</p>
+                    <button class="btn btn-light fw-bold rounded-pill" data-bs-toggle="modal" data-bs-target="#qrModal">
+                        View QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ================= UPLOAD MODAL ================= -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 bg-primary text-white p-4">
+                <h5 class="fw-bold mb-0">Upload Lab Report</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted">Select a PDF or Image of your lab report for AI analysis.</p>
+                <div class="mb-4">
+                    <input type="file" class="form-control form-control-lg rounded-3" id="fileInput"
+                        accept=".pdf,.png,.jpg,.jpeg">
+                </div>
+                <div class="d-grid">
+                    <button class="btn btn-primary btn-lg rounded-pill fw-bold" id="uploadBtn" onclick="uploadFile()">
+                        <i class="bi bi-cloud-upload me-2"></i>Upload Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= QR MODAL ================= -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 bg-primary text-white p-4">
+                <h5 class="fw-bold mb-0">My medical ID</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="bg-light p-4 rounded-4 mb-4 border border-dashed">
+                    {% if qr_image %}
+                    <img src="{{ url_for('static', filename=qr_image) }}" class="img-fluid rounded shadow-sm"
+                        style="max-width: 200px;">
+                    {% else %}
+                    <div class="text-muted py-5"><i class="bi bi-qr-code display-1 opacity-25"></i><br>Token expired.
+                        Refresh page.</div>
+                    {% endif %}
+                </div>
+                <p class="small text-muted mb-2">Share this code with your doctor or pharmacist to allow them secure
+                    access to your medical records.</p>
+                <div class="alert alert-info py-2 small mb-3" style="border-radius: 10px;">
+                    <i class="bi bi-info-circle me-1"></i> Use this code for secure access to your medical records.
+                </div>
+                <div class="input-group mb-0">
+                    <input type="text" class="form-control text-center fw-bold" id="qrTokenInput" value="{{ qr_token }}"
+                        readonly>
+                    <button class="btn btn-outline-primary" type="button" onclick="copyQRToken()">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= SCRIPTS ================= -->
+<script>
+    let analysisModal = null;
+    let qrModal = null;
+    let uploadModal = null;
+
+
+    function copyQRToken() {
+        // ... (lines 203-240)
+        const input = document.getElementById("qrTokenInput");
+        const token = input.value;
+
+        input.removeAttribute("readonly");
+        input.focus();
+        input.select();
+
+        function success() {
+            Swal.fire({
+                toast: true,
+                position: 'bottom-end',
+                icon: 'success',
+                title: 'Token copied',
+                showConfirmButton: false,
+                timer: 2000,
+                background: '#198754',
+                color: '#fff',
+                iconColor: '#fff'
+            });
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(token).then(success).catch(fallback);
+        } else {
+            fallback();
+        }
+
+        function fallback() {
+            try {
+                document.execCommand("copy");
+                success();
+            } catch {
+                Swal.fire('Error', 'Copy manually', 'error');
+            }
+        }
+
+        input.setAttribute("readonly", true);
+    }
+
+    async function uploadFile() {
+        const file = document.getElementById('fileInput').files[0];
+        if (!file) return alert("Choose a file");
+
+        const form = new FormData();
+        form.append('file', file);
+
+        const btn = document.getElementById('uploadBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Uploading...';
+
+        try {
+            const res = await fetch("{{ url_for('patient.upload_file') }}", {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: form
+            });
+
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+                if (data.success) {
+                    Swal.fire('Uploaded', 'File uploaded successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Swal.fire('Error', data.error || 'Upload failed', 'error');
+                }
+            } catch (e) {
+                console.error("Non-JSON response:", text);
+                Swal.fire('Server Error', 'The server returned an invalid response. Please check your connection or file size.', 'error');
+            }
+        } catch (err) {
+            console.error("Upload Error:", err);
+            Swal.fire('Network Error', 'Failed to reach the server.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Upload Now';
+        }
+    }
+</script>
+
+{% endblock %}

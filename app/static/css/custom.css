@@ -1,0 +1,291 @@
+:root {
+    /* Blue Background Theme */
+    --bg-gradient-start: #0052d4;
+    --bg-gradient-mid: #4364f7;
+    --bg-gradient-end: #6fb1fc;
+
+    /* Card Themes */
+    /* Light Mode Default */
+    --card-bg: #ffffff;
+    --text-main: #000000;
+    /* True Black */
+    --text-muted: #4b5563;
+    /* Darker Gray for readability */
+    --border-color: #e9ecef;
+    --input-bg: #f8f9fa;
+    --card-header-bg: #f8fafc;
+
+    /* Floating Icons */
+    --icon-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] {
+    --card-bg: #0f172a;
+    /* Deeper Slate */
+    --text-main: #ffffff;
+    /* True White */
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --input-bg: #1e293b;
+    --card-header-bg: #1e293b;
+}
+
+/* Adaptive Utility Classes */
+.adaptive-text {
+    color: var(--text-main) !important;
+}
+
+.adaptive-muted {
+    color: var(--text-muted) !important;
+}
+
+.adaptive-bg {
+    background-color: var(--card-bg) !important;
+}
+
+.adaptive-header {
+    background-color: var(--card-header-bg) !important;
+}
+
+.adaptive-border {
+    border-color: var(--border-color) !important;
+}
+
+.modal-backdrop {
+    display: none !important;
+}
+
+body {
+    background: linear-gradient(-45deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-main);
+    overflow-x: hidden;
+    position: relative;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Central Card Layout */
+.main-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    position: relative;
+    z-index: 10;
+}
+
+.content-card {
+    background-color: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+/* Floating Icons Animation */
+.floating-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 0;
+    /* Background level */
+    pointer-events: none;
+}
+
+.shape {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 2rem;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    animation: float 10s ease-in-out infinite;
+}
+
+.shape:nth-child(1) {
+    top: 15%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.shape:nth-child(2) {
+    top: 70%;
+    left: 5%;
+    animation-delay: 2s;
+    font-size: 1.5rem;
+    width: 60px;
+    height: 60px;
+}
+
+.shape:nth-child(3) {
+    top: 25%;
+    right: 15%;
+    animation-delay: 4s;
+}
+
+.shape:nth-child(4) {
+    top: 80%;
+    right: 8%;
+    animation-delay: 1s;
+    font-size: 2.5rem;
+    width: 90px;
+    height: 90px;
+}
+
+.shape:nth-child(5) {
+    top: 40%;
+    left: 85%;
+    animation-delay: 3s;
+    font-size: 1.2rem;
+    width: 50px;
+    height: 50px;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-30px) rotate(5deg);
+    }
+
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+}
+
+/* Central Card Layout */
+.main-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    position: relative;
+    z-index: 10;
+    /* Above shapes */
+}
+
+/* Navbar */
+.navbar-custom {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: none;
+    padding: 1rem 0;
+    z-index: 20;
+    /* Above main container */
+}
+
+/* Background shapes (no clicks) */
+.floating-shapes {
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Main content */
+.main-container {
+    position: relative;
+    z-index: 10;
+}
+
+/* Navbar */
+.navbar-custom {
+    position: relative;
+    z-index: 20;
+}
+
+/* Bootstrap Modal – Enhanced Cleanup */
+.modal-backdrop {
+    display: none !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-dialog {
+    z-index: 1060 !important;
+}
+
+.modal-content {
+    position: relative;
+    z-index: 1065 !important;
+    pointer-events: auto;
+}
+
+/* Allow body to remain scrollable even when modals open */
+body.modal-open {
+    overflow: auto !important;
+    padding-right: 0 !important;
+}
+
+.modal-open .modal {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* ===== Adaptive Back Buttons for Dark/Light Mode ===== */
+/* Default (Light Mode) - Dark button on light background */
+.btn-outline-light {
+    background-color: var(--card-bg) !important;
+    color: var(--text-main) !important;
+    border: 2px solid var(--border-color) !important;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background-color: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--text-muted) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark Mode - Light button on dark background */
+[data-theme="dark"] .btn-outline-light {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px);
+}
+
+[data-theme="dark"] .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure icons in buttons are visible */
+.btn-outline-light i {
+    opacity: 0.9;
+}
+
+[data-theme="dark"] .btn-outline-light i {
+    opacity: 1;
+}

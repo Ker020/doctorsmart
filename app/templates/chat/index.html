@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Header with Back Button -->
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="text-white mb-1">
+                <i class="bi bi-chat-dots-fill me-2"></i>Messages
+            </h2>
+            <p class="text-white-50 mb-0">Chat with doctors, pharmacists, and patients</p>
+        </div>
+        <a href="{% if current_user.role == 'doctor' %}{{ url_for('doctor.dashboard') }}{% elif current_user.role == 'pharmacist' %}{{ url_for('pharmacist.dashboard') }}{% elif current_user.role == 'patient' %}{{ url_for('patient.dashboard') }}{% elif current_user.role == 'admin' %}{{ url_for('admin.dashboard') }}{% elif current_user.role == 'lab' %}{{ url_for('lab.dashboard') }}{% else %}{{ url_for('auth.login') }}{% endif %}"
+            class="btn btn-primary btn-sm rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+<div class="row h-100" style="height: calc(100vh - 100px) !important;">
+    <!-- Contacts Sidebar -->
+    <div class="col-md-4 col-lg-3 border-end adaptive-bg p-0 h-100 d-flex flex-column shadow-sm overflow-hidden"
+        style="border-radius: 15px 0 0 15px;">
+        <div class="p-3 adaptive-header border-bottom">
+            <h5 class="mb-0 fw-bold adaptive-text"><i class="bi bi-chat-square-text-fill me-2 text-primary"></i>Messages
+            </h5>
+        </div>
+        <div class="overflow-auto flex-grow-1" id="contactsList">
+            <!-- Contacts loaded via JS -->
+            <div class="text-center p-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading...
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="col-md-8 col-lg-9 adaptive-bg p-0 h-100 d-flex flex-column" style="border-radius: 0 15px 15px 0;">
+        <!-- Chat Header -->
+        <div class="p-3 adaptive-header border-bottom d-flex align-items-center justify-content-between d-none"
+            id="chatHeader">
+            <div class="d-flex align-items-center">
+                <img src="" id="headerAvatar" class="rounded-circle me-3 border" width="40" height="40">
+                <div>
+                    <h6 class="mb-0 fw-bold adaptive-text" id="headerName">Select a Contact</h6>
+                    <small class="adaptive-muted" id="headerRole">To start chatting</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="h-100 d-flex flex-column align-items-center justify-content-center adaptive-muted">
+            <i class="bi bi-chat-left-dots" style="font-size: 4rem; opacity: 0.3;"></i>
+            <h4 class="mt-3">Select a conversation</h4>
+            <p>Chat with Doctors, Pharmacists, and Admins securely.</p>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="messagesContainer" class="flex-grow-1 p-4 overflow-auto d-none" style="scroll-behavior: smooth;">
+            <div id="messageList" class="d-flex flex-column h-100">
+                <!-- Messages go here -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div id="chatInput" class="p-3 adaptive-header border-top d-none">
+            <form id="messageForm" class="d-flex gap-2">
+                <input type="text" id="messageInput"
+                    class="form-control form-control-lg rounded-pill border-0 adaptive-bg adaptive-text"
+                    placeholder="Type a message..." autocomplete="off">
+                <button type="submit"
+                    class="btn btn-primary rounded-circle p-3 shadow-sm d-flex align-items-center justify-content-center"
+                    style="width: 50px; height: 50px;">
+                    <i class="bi bi-send-fill fs-5"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Chat Custom Styles */
+    .contact-item {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .contact-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(3px);
+    }
+
+    .contact-item.active {
+        background-color: #eef2ff !important;
+        border-left: 4px solid #0d6efd;
+    }
+
+    .message-bubble {
+        min-width: 160px;
+        max-width: 75%;
+        padding: 14px 18px;
+        border-radius: 20px;
+        position: relative;
+        animation: fadeIn 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        line-height: 1.5;
+    }
+
+    .message-sent {
+        background-color: white;
+        color: #0d6efd;
+        border-radius: 20px 20px 0 20px;
+        align-self: flex-end;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .message-received {
+        background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+        color: white;
+        border-radius: 20px 20px 20px 0;
+        align-self: flex-start;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    }
+
+    .timestamp {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-top: 4px;
+        display: block;
+        text-align: right;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    const currentUserId = {{ current_user.id }};
+    const currentUserName = '{{ current_user.name }}';
+    let currentPartnerId = {{ partner.id if partner else 'null' }};
+    let activePrescriptionId = {{ prescription.id if prescription else 'null' }};
+    let pollInterval;
+    let lastMessagesJson = '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadContacts();
+
+        // If partner is pre-selected (from prescription context), load chat immediately
+        if (currentPartnerId) {
+            selectContact(currentPartnerId, '{{ partner.name if partner else "" }}', '{{ partner.role if partner else "" }}', '{{ partner.profile_image if partner else "" }}');
+        }
+    });
+
+    async function loadContacts() {
+        try {
+            const res = await fetch("{{ url_for('chat.get_contacts') }}");
+            const contacts = await res.json();
+            const list = document.getElementById('contactsList');
+            list.innerHTML = '';
+
+            contacts.forEach(c => {
+                const div = document.createElement('div');
+                div.className = `contact-item p-3 border-bottom cursor-pointer ${currentPartnerId === c.id ? 'active' : ''} hover-bg-light`;
+                div.onclick = (e) => selectContact(c.id, c.name, c.role, c.avatar, e);
+
+                div.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="position-relative">
+                            <img src="{{ url_for('static', filename='images/') }}${c.avatar.startsWith('default') ? 'default_avatar.png' : (c.role === 'doctor' ? 'doctors/' + c.avatar : c.avatar)}" 
+                                 class="rounded-circle border" width="45" height="45"
+                                 onerror="this.src='{{ url_for('static', filename='images/default_avatar.png') }}'">
+                            ${c.unread_count > 0 ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white p-1" style="font-size: 0.6rem;">${c.unread_count}</span>` : ''}
+                        </div>
+                        <div class="ms-3 flex-grow-1 overflow-hidden">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold text-truncate adaptive-text">${c.name}</h6>
+                                <small class="adaptive-muted" style="font-size: 0.7rem;">${c.role.toUpperCase()}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function getRoleBadgeClass(role) {
+        if (role === 'doctor') return 'bg-info text-dark';
+        if (role === 'pharmacist') return 'bg-success';
+        if (role === 'admin') return 'bg-danger';
+        return 'bg-secondary';
+    }
+
+    function selectContact(id, name, role, avatar, event) {
+        currentPartnerId = id;
+
+        // Show Chat UI components
+        document.getElementById('chatHeader').classList.remove('d-none');
+        document.getElementById('emptyState').classList.add('d-none');
+        document.getElementById('messagesContainer').classList.remove('d-none');
+        document.getElementById('chatInput').classList.remove('d-none');
+
+        // Ensure flex display for messages container
+        document.getElementById('messagesContainer').style.display = 'flex';
+
+        // Update Header
+        document.getElementById('headerName').textContent = name;
+        document.getElementById('headerRole').textContent = role.toUpperCase();
+
+        // Fix avatar path logic for header
+        let avatarPath = "{{ url_for('static', filename='images/') }}";
+        if (!avatar || avatar.startsWith('default')) {
+            avatarPath += 'default_avatar.png';
+        } else if (role === 'doctor') {
+            avatarPath += 'doctors/' + avatar;
+        } else {
+            avatarPath += avatar;
+        }
+        document.getElementById('headerAvatar').src = avatarPath;
+
+        // Update Active Class
+        document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active', 'bg-light'));
+        if (event && event.currentTarget) event.currentTarget.classList.add('active', 'bg-light');
+        else { // If pre-selected, find and activate
+            const contactItems = document.querySelectorAll('.contact-item');
+            contactItems.forEach(item => {
+                if (item.innerHTML.includes(`id="${id}"`)) { // This is a crude way, better to add data-id to contact-item
+                    item.classList.add('active', 'bg-light');
+                }
+            });
+        }
+
+        // Load Messages
+        loadMessages();
+
+        // Start Polling
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(loadMessages, 3000); // Poll every 3s
+    }
+
+    async function loadMessages() {
+        if (!currentPartnerId) return;
+
+        try {
+            let url = "{{ url_for('chat.get_messages', partner_id=0) }}".replace('/0', '/' + currentPartnerId);
+            if (activePrescriptionId) {
+                url += `?prescription_id=${activePrescriptionId}`;
+            }
+            const res = await fetch(url);
+            const messages = await res.json();
+            const currentJson = JSON.stringify(messages);
+            if (currentJson !== lastMessagesJson) {
+                lastMessagesJson = currentJson;
+                renderMessages(messages);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function renderMessages(messages) {
+        const messageList = document.getElementById('messageList');
+        const wasScrolledBottom = (messageList.scrollHeight - messageList.scrollTop) <= (messageList.clientHeight + 100);
+
+        messageList.innerHTML = ''; 
+
+        messages.forEach(m => {
+            const isMe = Number(m.sender) === Number(currentUserId);
+            const partnerName = document.getElementById('headerName').textContent;
+            const senderDisplayName = isMe ? 'You / أنت' : partnerName;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = `w-100 d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-4 px-3`;
+
+            wrapper.innerHTML = `
+                <div class="d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}" style="width: 100%; max-width: 80%;">
+                    <small class="mb-1 fw-bold opacity-75" style="font-size: 0.75rem; color: ${isMe ? '#0d6efd' : '#ffffff'}; text-shadow: ${isMe ? 'none' : '0 1px 2px rgba(0,0,0,0.2)'}; margin-${isMe ? 'right' : 'left'}: 10px;">
+                        ${senderDisplayName}
+                    </small>
+                    <div class="message-bubble ${isMe ? 'message-sent' : 'message-received shadow-sm'}">
+                        <div class="message-text" style="word-break: break-word;">${m.message}</div>
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                            <span class="timestamp ${isMe ? 'text-muted' : 'text-white-50'} opacity-75" style="font-size: 0.65rem;">
+                                <i class="bi bi-clock me-1"></i>${new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            ${isMe ? `
+                                <span class="ms-2 d-flex align-items-center">
+                                    <i class="bi bi-check2-all ${m.is_read ? '' : 'text-muted'}" style="font-size: 1.1rem; color: ${m.is_read ? '#34B7F1' : '#6c757d'}; line-height: 1;"></i>
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            messageList.appendChild(wrapper);
+        });
+
+        if (wasScrolledBottom || messages.length > 0) {
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+    }
+
+
+    document.getElementById('messageForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+        if (!text || !currentPartnerId) return;
+
+        input.value = ''; // UI Optimistic clear
+
+        try {
+            const body = {
+                receiver_id: currentPartnerId,
+                message: text
+            };
+            if (activePrescriptionId) {
+                body.prescription_id = activePrescriptionId;
+            }
+
+            await fetch("{{ url_for('chat.send_message') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            loadMessages(); // Refresh immediately
+        } catch (e) {
+            console.error("Send failed", e);
+        }
+    };
+</script>
+{% endblock %}

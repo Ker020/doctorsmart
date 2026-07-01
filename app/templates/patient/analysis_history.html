@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-5 animate__animated animate__fadeIn">
+        <div>
+            <h1 class="display-5 fw-bold mb-2 text-gradient">
+                <i class="bi bi-activity me-2"></i>Analysis History
+            </h1>
+            <p class="lead text-muted">Intelligent medical insights from your latest laboratory tests.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('patient.dashboard') }}"
+                class="btn btn-primary rounded-pill px-4 py-2 shadow-sm hover-up">
+                <i class="bi bi-house-door me-2"></i>Dashboard
+            </a>
+            <button class="btn btn-outline-primary rounded-pill px-4 py-2 shadow-sm hover-up" onclick="window.print()">
+                <i class="bi bi-printer me-2"></i>Print All
+            </button>
+        </div>
+    </div>
+
+    {% if not tests %}
+    <div class="card border-0 shadow-lg rounded-4 p-5 text-center animate__animated animate__zoomIn">
+        <div class="mb-4">
+            <div class="icon-shape bg-light text-primary rounded-circle mx-auto mb-3"
+                style="width: 100px; height: 100px; line-height: 100px;">
+                <i class="bi bi-cloud-upload display-4"></i>
+            </div>
+            <h3 class="fw-bold">No Records Yet</h3>
+            <p class="text-muted mb-0">Upload your first lab report on the dashboard for AI analysis.</p>
+        </div>
+        <a href="{{ url_for('patient.dashboard') }}" class="btn btn-primary btn-lg rounded-pill px-5">Get Started</a>
+    </div>
+    {% else %}
+    <div class="row g-4">
+        {% for item in tests %}
+        {% set test = item.test %}
+        {% set data = item.data %}
+        <div class="col-12 mb-4 animate__animated animate__fadeInUp" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden glass-card">
+                <!-- Card Header -->
+                <div class="card-header border-0 bg-white p-4">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 me-3">
+                                    <i class="bi bi-calendar3 me-1"></i> {{ test.completed_date.strftime('%d %b %Y,
+                                    %I:%M %p') if test.completed_date else 'N/A' }}
+                                </span>
+                                <h3 class="fw-bold mb-0 text-dark">{{ test.test_name }}</h3>
+                            </div>
+                        </div>
+                        {% if data and data.severity_level %}
+                        <div class="col-auto text-end">
+                            <div class="severity-indicator">
+                                <span class="badge rounded-pill px-4 py-2 shadow-sm fs-6
+                                    {% if data.severity_level|lower == 'normal' %}bg-success
+                                    {% elif data.severity_level|lower == 'low' %}bg-info
+                                    {% elif data.severity_level|lower == 'moderate' %}bg-warning
+                                    {% else %}bg-danger{% endif %} animate__animated animate__pulse animate__infinite">
+                                    {{ data.severity_level|upper }} SEVERITY
+                                </span>
+                                <div class="mt-2 h5 fw-bold text-primary">{{ data.get('risk_score', 0) }}% <small
+                                        class="text-muted">Risk Score</small></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-body p-4 pt-0">
+                    <div class="row g-4 mt-1">
+                        <!-- AI Analysis Section -->
+                        <div class="col-lg-12">
+                            <ul class="nav nav-pills mb-4 bg-light p-2 rounded-pill justify-content-center"
+                                id="pills-tab-{{ loop.index }}" role="tablist">
+                                <li class="nav-item flex-fill text-center" role="presentation">
+                                    <button class="nav-link active rounded-pill px-4 w-100 fw-bold"
+                                        id="pills-ar-tab-{{ loop.index }}" data-bs-toggle="pill"
+                                        data-bs-target="#pills-ar-{{ loop.index }}" type="button" role="tab">
+                                        <i class="bi bi-translate me-2"></i>التحليل العربي
+                                    </button>
+                                </li>
+                                <li class="nav-item flex-fill text-center" role="presentation">
+                                    <button class="nav-link rounded-pill px-4 w-100 fw-bold"
+                                        id="pills-en-tab-{{ loop.index }}" data-bs-toggle="pill"
+                                        data-bs-target="#pills-en-{{ loop.index }}" type="button" role="tab">
+                                        <i class="bi bi-file-medical me-2"></i>English Summary
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="pills-tabContent-{{ loop.index }}">
+                                <!-- Arabic Content -->
+                                <div class="tab-pane fade show active" id="pills-ar-{{ loop.index }}" role="tabpanel">
+                                    <div
+                                        class="bg-white p-4 rounded-4 shadow-sm border-start border-4 border-primary dir-rtl">
+                                        <div class="markdown-body arabic-text">
+                                            {{ data.get('arabic_explanation', 'No details available.') | markdown | safe
+                                            }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- English Content -->
+                                <div class="tab-pane fade" id="pills-en-{{ loop.index }}" role="tabpanel">
+                                    <div class="bg-dark text-white p-4 rounded-4 shadow-sm">
+                                        <div class="markdown-body english-text opacity-90">
+                                            {{ data.get('english_summary', 'No summary available.') | markdown | safe }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Details Section -->
+                        <div class="col-lg-12">
+                            <div class="card border-0 bg-light rounded-4 overflow-hidden">
+                                <div class="card-header bg-white p-3 border-0">
+                                    <h6 class="fw-bold mb-0 text-primary">Lab Results Comparison</h6>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-primary text-white">
+                                            <tr>
+                                                <th class="ps-4">Parameter</th>
+                                                <th class="text-center">Measured Value</th>
+                                                <th class="text-center">Reference Range</th>
+                                                <th class="pe-4 text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if data.test_results %}
+                                            {% for param, val in data.test_results.items() %}
+                                            <tr>
+                                                <td class="ps-4 fw-bold text-dark">{{ param }}</td>
+                                                <td class="text-center">
+                                                    <span
+                                                        class="h5 fw-bold mb-0 {% if val.status == 'Normal' %}text-success{% else %}text-danger{% endif %}">
+                                                        {{ val.value }} <small class="text-muted">{{ val.unit or ''
+                                                            }}</small>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center text-muted">
+                                                    {% if val.reference_range %}
+                                                    <span class="badge bg-white text-dark shadow-sm border px-3">
+                                                        {% if val.reference_range is mapping %}
+                                                        {{ val.reference_range.min }} - {{ val.reference_range.max }}
+                                                        {% else %}
+                                                        {{ val.reference_range[0] }} - {{ val.reference_range[1] }}
+                                                        {% endif %}
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="text-muted">N/A</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="pe-4 text-center">
+                                                    <span class="badge rounded-pill px-3 py-2 
+                                                            {% if val.status == 'Normal' %}bg-success
+                                                            {% elif 'High' in val.status %}bg-danger
+                                                            {% elif 'Low' in val.status %}bg-warning text-dark
+                                                            {% else %}bg-secondary{% endif %}">
+                                                        {{ val.status|upper }}
+                                                        {% if 'High' in val.status %}<i
+                                                            class="bi bi-arrow-up ms-1"></i>{% endif %}
+                                                        {% if 'Low' in val.status %}<i
+                                                            class="bi bi-arrow-down ms-1"></i>{% endif %}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="4" class="text-center p-5 text-muted italic">
+                                                    <i class="bi bi-info-circle me-2"></i>No detailed test parameters
+                                                    captured for this record.
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        --glass-bg: rgba(255, 255, 255, 0.9);
+    }
+
+    .text-gradient {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .glass-card:hover {
+        transform: translateY(-8px);
+    }
+
+    .bg-soft-primary {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    .dir-rtl {
+        direction: rtl;
+        text-align: right;
+    }
+
+    .arabic-text {
+        font-family: 'Dubai', 'Tajawal', sans-serif;
+        font-size: 1.15rem;
+        line-height: 2;
+    }
+
+    .english-text {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    /* Markdown Body Styling */
+    .markdown-body ul,
+    .markdown-body ol {
+        margin-bottom: 1rem;
+        padding-inline-start: 1.5rem;
+    }
+
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: 700;
+        color: inherit;
+    }
+
+    .markdown-body p {
+        margin-bottom: 1rem;
+    }
+
+    .markdown-body strong {
+        color: #0d6efd;
+    }
+
+    .nav-pills .nav-link {
+        color: #6c757d;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .nav-pills .nav-link.active {
+        background: var(--primary-gradient);
+        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+    }
+
+    .hover-up {
+        transition: all 0.3s ease;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Print Styles */
+    @media print {
+
+        .navbar,
+        .btn,
+        .nav-pills,
+        .header-section,
+        .d-flex.gap-2 {
+            display: none !important;
+        }
+
+        .container {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #eee !important;
+        }
+
+        .tab-content>.tab-pane {
+            display: block !important;
+            opacity: 1 !important;
+        }
+    }
+</style>
+
+<!-- Typography Fonts -->
+<link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Tajawal:wght@400;700&display=swap"
+    rel="stylesheet">
+<!-- Animation Lib -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+{% endblock %}

@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% block title %}Doctor Smart - AI Health Assistant{% endblock %}
+
+{% block content %}
+
+<!-- ===================== THEME TOKENS ===================== -->
+<style>
+    @import url('https://fonts.com/css2?family=Unbounded:wght@400;700;900&family=Work+Sans:wght@300;400;600;700&display=swap');
+
+    /* FORCED DARK THEME FOR AI ASSISTANT */
+    :root {
+        --brand-primary: #2563eb;
+        --brand-secondary: #06b6d4;
+        --brand-accent: #22c55e;
+        --brand-warning: #f59e0b;
+        --brand-danger: #ef4444;
+
+        /* Forced Dark Variables */
+        --ai-bg-main: linear-gradient(135deg, #0a0e1a, #16213e, #0f3460);
+        --ai-bg-card: rgba(16, 27, 47, 0.88);
+        --ai-bg-glass: rgba(255, 255, 255, 0.04);
+
+        --ai-text-primary: #f8fafc;
+        /* Forced Light Text */
+        --ai-text-secondary: #cbd5e1;
+        --ai-text-muted: #94a3b8;
+
+        --ai-border-soft: rgba(255, 255, 255, .12);
+        --ai-shadow-soft: 0 20px 40px rgba(0, 0, 0, .45);
+    }
+
+    /* Override Global Styles for this page */
+    body {
+        background: var(--ai-bg-main) !important;
+        background-attachment: fixed !important;
+        font-family: 'Work Sans', sans-serif;
+        color: var(--ai-text-primary) !important;
+    }
+
+    /* FIX: Force global content-card to be transparent on this page */
+    .content-card {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    /* Ensure main container doesn't have restrictive sizing issues */
+    .main-container {
+        margin-top: 20px !important;
+    }
+
+    /* Target all content card text */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    span,
+    li,
+    strong,
+    div {
+        color: var(--ai-text-primary) !important;
+    }
+
+    .card {
+        background: var(--ai-bg-card) !important;
+        border-radius: 2rem !important;
+        box-shadow: var(--ai-shadow-soft) !important;
+        border: 1px solid var(--ai-border-soft) !important;
+        transition: transform .3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+    }
+
+    .bg-glass {
+        background: var(--ai-bg-glass) !important;
+        backdrop-filter: blur(14px);
+        border: 1px solid var(--ai-border-soft) !important;
+        color: var(--ai-text-primary) !important;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #22c55e, #06b6d4, #2563eb);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .fw-black {
+        font-weight: 900;
+    }
+
+    /* Emergency Highlight */
+    .emergency-box {
+        border-left: 6px solid var(--brand-danger);
+        background: rgba(239, 68, 68, .15);
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+        animation: pulseDanger 2s infinite;
+        color: var(--ai-text-primary) !important;
+    }
+
+    @keyframes pulseDanger {
+        0% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, .4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+    }
+
+    .progress {
+        height: 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        transition: width 0.5s ease;
+        border-radius: 10px;
+    }
+
+    .bg-danger-grad {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    .bg-warning-grad {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .bg-success-grad {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+
+    /* Input Styling */
+    .form-control {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid var(--ai-border-soft) !important;
+        color: white !important;
+    }
+
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
+    }
+
+    .text-muted {
+        color: var(--ai-text-muted) !important;
+    }
+</style>
+
+<!-- ===================== HEADER ===================== -->
+<div class="text-center mb-5">
+    <h1 class="display-3 fw-black gradient-text">AI HEALTH ASSISTANT</h1>
+    <h3 class="fw-bold" style="color: var(--text-primary)">DOCTOR SMART</h3>
+    <div class="bg-glass p-4 rounded-4 mt-3">
+        <p class="fs-4 mb-1" style="color: var(--text-primary)">Smart symptom analysis with professional insights.</p>
+        <p class="fs-5 text-muted">تحليل ذكي للأعراض مع رؤى طبية احترافية.</p>
+    </div>
+</div>
+
+<!-- ===================== INPUT ===================== -->
+<div class="card p-4 mb-5">
+    <h4 class="fw-bold mb-3" style="color: var(--text-primary)">Describe Symptoms / وصف الأعراض</h4>
+    <textarea id="symptomsInput" class="form-control form-control-lg mb-4" rows="5"
+        placeholder="Example: Severe headache, fever, cough... / مثال: صداع شديد، حرارة، سعال"></textarea>
+
+    <button id="analyzeBtn" class="btn btn-primary btn-lg fw-black w-100 py-3" onclick="analyzeSymptoms()">
+        <i class="bi bi-activity me-2"></i>START AI ANALYSIS / ابدأ التحليل
+    </button>
+
+    <div id="loading" class="text-center mt-4 d-none">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+        <p class="mt-3 fs-5" style="color: var(--text-primary)">Analyzing symptoms... Please wait up to 60 seconds</p>
+        <p class="text-muted">تحليل الأعراض... قد يستغرق حتى 60 ثانية</p>
+    </div>
+</div>
+
+<!-- ===================== RESULTS ===================== -->
+<div id="resultsSection" class="d-none">
+
+    <!-- Emergency -->
+    <div id="emergencyBox" class="emergency-box mb-4 d-none">
+        <h4 class="text-danger fw-bold mb-2">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            EMERGENCY / حالة طارئة
+        </h4>
+        <p class="mb-0">This may be a medical emergency – seek immediate care / توجه فوراً للطوارئ</p>
+    </div>
+
+    <!-- Confidence & Severity -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card p-3 text-center">
+                <h6 class="text-muted mb-2">Confidence Level / مستوى اليقين</h6>
+                <h2 id="confidenceScore" class="fw-black mb-0">--</h2>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 text-center">
+                <h6 class="text-muted mb-2">Severity / درجة الخطورة</h6>
+                <h3 id="severityLevel" class="fw-bold mb-0">--</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENGLISH RESULTS -->
+    <div class="card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0" style="color: var(--text-primary)"><i
+                    class="bi bi-clipboard2-pulse me-2"></i>English Analysis</h4>
+            <span class="badge bg-primary">EN</span>
+        </div>
+
+        <div class="mb-4">
+            <h5 class="text-info mb-3">Potential Conditions</h5>
+            <div id="conditionsListEn"></div>
+        </div>
+
+        <div id="medicationsCardEn" class="mb-4 d-none">
+            <h5 class="text-success mb-3">Medications</h5>
+            <div id="medicationsListEn"></div>
+        </div>
+
+        <div>
+            <h5 class="text-warning mb-3">Recommendations</h5>
+            <ul id="recommendationsListEn" class="list-unstyled" style="color: var(--text-primary)"></ul>
+        </div>
+    </div>
+
+    <!-- ARABIC RESULTS -->
+    <div class="card p-4 mb-4" dir="rtl">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0" style="color: var(--text-primary)"><i class="bi bi-robot ms-2"></i>التحليل العربي
+            </h4>
+            <span class="badge bg-success">AR</span>
+        </div>
+
+        <div class="mb-4">
+            <h5 class="text-info mb-3">النتائج المحتملة</h5>
+            <div id="conditionsListAr"></div>
+        </div>
+
+        <div id="medicationsCardAr" class="mb-4 d-none">
+            <h5 class="text-success mb-3">الأدوية الموصى بها</h5>
+            <div id="medicationsListAr"></div>
+        </div>
+
+        <div>
+            <h5 class="text-warning mb-3">التوصيات</h5>
+            <ul id="recommendationsListAr" class="list-unstyled" style="color: var(--text-primary)"></ul>
+        </div>
+    </div>
+
+    <!-- Specialist & Map -->
+    <div class="card p-4 text-center mb-4">
+        <h4 class="fw-bold mb-3" style="color: var(--text-primary)"><i class="bi bi-person-badge me-2"></i>Recommended
+            Specialist / التخصص المطلوب</h4>
+        <h3 id="specialistName" class="fw-black mb-4 text-primary">--</h3>
+        <div id="mapBox"></div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="bg-glass p-4 rounded-4" style="color: var(--text-primary)">
+        <strong><i class="bi bi-info-circle me-2"></i>Disclaimer / إخلاء مسؤولية:</strong>
+        <p id="disclaimerText" class="mb-0 mt-2"></p>
+    </div>
+
+</div>
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+    function renderConditions(containerId, conditions) {
+        const container = document.getElementById(containerId);
+        if (conditions && conditions.length > 0) {
+            container.innerHTML = conditions.map(p => `
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong class="fs-6" style="color: var(--ai-text-primary)">${p.name}</strong>
+                        <span class="fw-bold" style="color: ${getRiskColor(p.probability)}">${p.probability || 0}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar ${getRiskClass(p.probability)}" 
+                             style="width:${p.probability || 0}%" 
+                             role="progressbar"></div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-muted small">No conditions identified</p>';
+        }
+    }
+
+    function renderMeds(cardId, listId, meds) {
+        const card = document.getElementById(cardId);
+        const list = document.getElementById(listId);
+        if (meds && meds.length > 0) {
+            card.classList.remove('d-none');
+            list.innerHTML = meds.map(m => `
+                <div class="mb-3 p-3 rounded-3 bg-glass" style="border: 1px solid var(--brand-primary); color: var(--ai-text-primary)">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-capsule-pill me-2"></i>${m.name}</h6>
+                        <span class="badge bg-primary">${m.dosage || ''}</span>
+                    </div>
+                    <div class="row mt-2" style="color: var(--ai-text-secondary)">
+                        <div class="col-6">
+                            <small class="text-muted">Freq / الجرعة:</small>
+                            <p class="mb-0 small">${m.frequency || 'N/A'}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Dur / المدة:</small>
+                            <p class="mb-0 small">${m.duration || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            card.classList.add('d-none');
+        }
+    }
+
+    function renderRecs(listId, recs) {
+        const list = document.getElementById(listId);
+        if (recs && recs.length > 0) {
+            list.innerHTML = recs.map(r => `
+                <li class="mb-2 p-2 bg-glass rounded-3 small" style="color: var(--ai-text-primary); border: 1px solid var(--ai-border-soft)">
+                    <i class="bi bi-check2-circle text-success me-2"></i>${r}
+                </li>
+            `).join('');
+        } else {
+            list.innerHTML = '<li class="text-muted small">None provided</li>';
+        }
+    }
+
+    async function analyzeSymptoms() {
+        const symptoms = symptomsInput.value.trim();
+        if (symptoms.length < 10) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'More Details Needed',
+                text: 'Please enter detailed symptoms / رجاءً اكتب وصفًا تفصيليًا',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+
+        analyzeBtn.disabled = true;
+        loading.classList.remove('d-none');
+        resultsSection.classList.add('d-none');
+        emergencyBox.classList.add('d-none');
+
+        let lat = null, lng = null;
+        try {
+            const pos = await new Promise((res, rej) =>
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 })
+            );
+            lat = pos.coords.latitude;
+            lng = pos.coords.longitude;
+        } catch (e) {
+            console.log("Geolocation not available:", e);
+        }
+
+        try {
+            const res = await fetch("analyze/patient", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symptoms, lat, lng })
+            });
+
+            const data = await res.json();
+            loading.classList.add('d-none');
+            analyzeBtn.disabled = false;
+
+            if (data.error) {
+                Swal.fire({ icon: 'error', title: 'Analysis Error', text: data.error, confirmButtonColor: '#2563eb' });
+                return;
+            }
+
+            resultsSection.classList.remove('d-none');
+
+            // Global Indicators
+            if (data.emergency) emergencyBox.classList.remove('d-none');
+            confidenceScore.textContent = (data.confidence || 0) + '%';
+            confidenceScore.style.color = data.confidence > 70 ? '#22c55e' : data.confidence > 40 ? '#f59e0b' : '#ef4444';
+            severityLevel.textContent = (data.severity || 'unknown').toUpperCase();
+            severityLevel.style.color = data.severity === 'high' ? '#ef4444' : data.severity === 'medium' ? '#f59e0b' : '#22c55e';
+
+            // English Render
+            renderConditions('conditionsListEn', data.english.conditions);
+            renderMeds('medicationsCardEn', 'medicationsListEn', data.english.medications);
+            renderRecs('recommendationsListEn', data.english.recommendations);
+
+            // Arabic Render
+            renderConditions('conditionsListAr', data.arabic.conditions);
+            renderMeds('medicationsCardAr', 'medicationsListAr', data.arabic.medications);
+            renderRecs('recommendationsListAr', data.arabic.recommendations);
+
+            // Specialist & Maps
+            const sp = data.english.specialist || {};
+            const sp_ar = data.arabic.specialist || {};
+            specialistName.textContent = `${sp.name || 'GP'} / ${sp_ar.name || 'طبيب عام'}`;
+
+            const mapDiv = document.getElementById('mapBox');
+            if (data.english.nearest_doctor) {
+                const doc = data.english.nearest_doctor;
+                mapDiv.innerHTML = `
+                <div class="card" style="border: 2px solid var(--brand-primary); background: var(--ai-bg-glass); color: var(--ai-text-primary) !important;">
+                    <div class="card-body text-start">
+                        <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-hospital me-2"></i>${doc.name}</h5>
+                        <p class="mb-3"><i class="bi bi-geo-alt me-2"></i>${doc.address}</p>
+                        <a href="${doc.map_url}" target="_blank" class="btn btn-primary rounded-pill"><i class="bi bi-map me-2"></i>Open Maps</a>
+                    </div>
+                </div>`;
+            } else {
+                mapDiv.innerHTML = `<p class="text-muted small">No nearby doctors found / لم يتم العثور على أطباء متاحين</p>`;
+            }
+
+            disclaimerText.innerHTML = `${data.english.disclaimer}<br>${data.arabic.disclaimer}`;
+
+            window.scrollTo({ top: resultsSection.offsetTop - 80, behavior: 'smooth' });
+
+        } catch (err) {
+            console.error('Error:', err);
+            loading.classList.add('d-none');
+            analyzeBtn.disabled = false;
+            Swal.fire({ icon: 'error', title: 'Connection Error', text: 'Error connecting to server.', confirmButtonColor: '#2563eb' });
+        }
+    }
+
+
+    function getRiskColor(prob) {
+        if (prob > 75) return '#ef4444';
+        if (prob > 40) return '#f59e0b';
+        return '#22c55e';
+    }
+
+    function getRiskClass(prob) {
+        if (prob > 75) return 'bg-danger-grad';
+        if (prob > 40) return 'bg-warning-grad';
+        return 'bg-success-grad';
+    }
+</script>
+
+{% endblock %}

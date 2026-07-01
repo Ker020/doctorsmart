@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .lab-card {
+        border-radius: 15px;
+        border: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+    .lab-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .lab-avatar {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="row">
+    <!-- Header with Standard Back Button -->
+    <div class="col-12 mb-4">
+        <div class="card p-4 shadow-sm border-0 adaptive-bg" style="border-radius: 20px;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0 fw-bold adaptive-text"><i class="bi bi-search me-2 text-primary"></i>Find a Laboratory</h3>
+                    <p class="adaptive-muted mb-0">Search and book medical analyses with top labs</p>
+                </div>
+                <!-- Back to Dashboard Button -->
+                <a href="{{ url_for('patient.dashboard') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-arrow-left me-2"></i><span class="text-dark fw-bold">Back to Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="col-lg-3 mb-4">
+        <div class="card p-4 h-100 adaptive-bg" style="border-radius: 15px;">
+            <h5 class="mb-3 adaptive-text"><i class="bi bi-funnel-fill me-2 text-primary"></i>Filters</h5>
+            <form action="{{ url_for('lab_booking.search') }}" method="GET">
+                <div class="mb-3">
+                    <label class="form-label fw-bold adaptive-text">Analysis Type</label>
+                    <select name="test_type" class="form-select" onchange="this.form.submit()">
+                        <option value="">Select Analysis</option>
+                        {% for t in test_types %}
+                        <option value="{{ t.id }}" {% if current_filter == t.id %}selected{% endif %}>
+                            {{ t.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lab Listings -->
+    <div class="col-lg-9">
+        {% if labs %}
+        <div class="row">
+            {% for lab in labs %}
+            <div class="col-12 mb-4">
+                <div class="card h-100 border-0 shadow-sm lab-card adaptive-bg" style="border-radius: 20px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="position-relative">
+                                <!-- Future: add lab logos -->
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 24px;">
+                                    <i class="bi bi-building"></i>
+                                </div>
+                                <span class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle p-2"></span>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-0 fw-bold adaptive-text">{{ lab.name }}</h5>
+                                <p class="adaptive-muted mb-0 small">{{ lab.address }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Lab Details -->
+                        <div class="mb-3">
+                            <p class="adaptive-muted mb-2">Modern laboratory with state-of-the-art equipment and professional staff.</p>
+
+                            <div class="d-flex flex-wrap gap-3 adaptive-muted small">
+                                <span>
+                                    <i class="bi bi-star-fill me-1 text-warning"></i>
+                                    <strong>{{ lab.rating }}</strong>
+                                </span>
+                                <span>
+                                    <i class="bi bi-geo-alt-fill me-1 text-danger"></i>
+                                    {{ lab.address }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-check-circle-fill me-1 text-success"></i>
+                                    {{ lab.selected_test_name }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Booking Section -->
+                        <div class="text-center mt-auto pt-3 border-top">
+                            <div class="bg-light p-3 rounded-3 mb-3">
+                                <div class="adaptive-muted small">Analysis Fee</div>
+                                <h3 class="text-success fw-bold mb-0">{{ lab.price_display }}</h3>
+                            </div>
+
+                            <button class="btn btn-danger w-100 rounded-pill fw-bold mb-2" 
+                                    {% if not lab.selected_service_id %}disabled{% endif %}
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#bookingModal{{ lab.id }}">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                {% if lab.selected_service_id %}Book & Pay Now{% else %}Select Analysis to Book{% endif %}
+                            </button>
+
+                            <div class="adaptive-muted small">
+                                <i class="bi bi-clock me-1"></i>Available slots today
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Modal for each lab -->
+            {% if lab.selected_service_id %}
+            <div class="modal fade" id="bookingModal{{ lab.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                        <div class="modal-header border-0 bg-primary text-white" style="border-radius: 20px 20px 0 0;">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-calendar-plus me-2"></i>Book Analysis
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="text-center mb-4">
+                                <h5 class="fw-bold">{{ lab.name }}</h5>
+                                <p class="badge bg-info text-dark">{{ lab.selected_test_name }}</p>
+                            </div>
+
+                            <form id="bookingForm{{ lab.id }}"
+                                onsubmit="bookLabAppointment(event, {{ lab.id }}, {{ lab.selected_service_id }})">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Date & Time</label>
+                                    <select name="date" class="form-select form-select-lg" required>
+                                        <option value="" selected disabled>Choose appointment slot</option>
+                                        {% for slot in lab.slots %}
+                                        <option value="{{ slot.datetime }}">{{ slot.display }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Payment Method</label>
+                                    <select name="payment_method" class="form-select" required>
+                                        <option value="card">Credit/Debit Card</option>
+                                        <option value="cash">Cash at Laboratory</option>
+                                    </select>
+                                </div>
+
+                                <div class="alert alert-info border-0">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Total Amount:</strong> {{ lab.price_display }}
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">
+                                    <i class="bi bi-check-circle me-1"></i>Confirm & Pay
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card p-5 text-center" style="border-radius: 15px;">
+            <i class="bi bi-search display-1 text-muted opacity-25"></i>
+            <h4 class="mt-3 text-muted">No laboratories found matching your criteria.</h4>
+            <p class="text-muted">Try selecting a different analysis type.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    async function bookLabAppointment(event, labId, serviceId) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const date = formData.get('date');
+        const paymentMethod = formData.get('payment_method');
+
+        try {
+            const response = await fetch("{{ url_for('lab_booking.book_appointment') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    lab_id: labId,
+                    service_id: serviceId,
+                    date: date,
+                    payment_method: paymentMethod
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Booking failed');
+            }
+
+            if (result.payment_required) {
+                window.location.href = result.redirect_url;
+            } else {
+                // Close modal
+                const modalElement = document.getElementById('bookingModal' + labId);
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+
+                alert('✅ ' + result.message);
+                window.location.href = "{{ url_for('patient.dashboard') }}";
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('❌ Error: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

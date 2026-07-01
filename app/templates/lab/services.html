@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-list-check me-2 text-primary"></i>My Services</h2>
+        <a href="{{ url_for('lab.dashboard') }}" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Add Service Form -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 2rem;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Add New Service</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('lab.add_service') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Test Type</label>
+                            <select name="test_type_id" class="form-select" required>
+                                <option value="" selected disabled>Choose a test...</option>
+                                {% for type in test_types %}
+                                <option value="{{ type.id }}">{{ type.name }} ({{ type.category }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select from standard catalog</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price ($)</label>
+                            <input type="number" name="price" step="0.01" class="form-control" required
+                                placeholder="0.00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Turnaround Time</label>
+                            <input type="text" name="turnaround" class="form-control" placeholder="e.g. 24 Hours">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Preparation</label>
+                            <textarea name="instructions" class="form-control" rows="3"
+                                placeholder="e.g. Fasting 8 hours..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">Add Service</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service List -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Test Name</th>
+                                    <th>Price</th>
+                                    <th>Details</th>
+                                    <th class="text-end pe-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for service in services %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-primary">{{ service.test_type.name }}</td>
+                                    <td class="fw-bold">${{ service.price }}</td>
+                                    <td>
+                                        <small class="d-block text-muted"><i class="bi bi-clock me-1"></i>{{
+                                            service.turnaround_time }}</small>
+                                        <small class="d-block text-muted text-truncate" style="max-width: 200px;">{{
+                                            service.preparation_instructions }}</small>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <form action="{{ url_for('lab.delete_service', service_id=service.id) }}"
+                                            method="POST" onsubmit="return confirm('Are you sure?');">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="bi bi-flask display-6 d-block mb-3"></i>
+                                        No services added yet.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

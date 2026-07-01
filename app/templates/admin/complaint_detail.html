@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Complaint Details -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-flag-fill me-2"></i>Complaint Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="badge 
+                            {% if complaint.status == 'Responded' %}bg-primary
+                            {% elif complaint.status == 'Resolved' %}bg-success
+                            {% else %}bg-warning text-dark
+                            {% endif %} rounded-pill mb-2">
+                            {{ complaint.status }}
+                        </span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Patient</label>
+                            <div class="fw-bold">{{ complaint.user.name }}</div>
+                            <small class="text-muted">{{ complaint.user.email }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Target</label>
+                            <div>
+                                {% if complaint.target_role %}
+                                <span class="badge 
+                                    {% if complaint.target_role == 'doctor' %}bg-info
+                                    {% elif complaint.target_role == 'lab' %}bg-success
+                                    {% elif complaint.target_role == 'pharmacist' %}bg-warning text-dark
+                                    {% endif %} rounded-pill">
+                                    {{ complaint.target_role | capitalize }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary rounded-pill">General</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Date Submitted</label>
+                        <div>{{ complaint.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Subject</label>
+                        <h5>{{ complaint.subject }}</h5>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Description</label>
+                        <div class="p-3 bg-light rounded">
+                            {{ complaint.description }}
+                        </div>
+                    </div>
+
+                    {% if complaint.admin_response %}
+                    <div class="alert alert-info">
+                        <label class="text-muted small d-block">Admin Response</label>
+                        <div>{{ complaint.admin_response }}</div>
+                        {% if complaint.responded_at %}
+                        <small class="text-muted d-block mt-2">
+                            Responded on: {{ complaint.responded_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Form -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="bi bi-reply-fill me-2"></i>Admin Response</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.respond_complaint', complaint_id=complaint.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Your Response</label>
+                            <textarea name="response" class="form-control" rows="8"
+                                placeholder="Write your response to the patient..."
+                                required>{{ complaint.admin_response or '' }}</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-send-fill me-1"></i>
+                            {% if complaint.admin_response %}Update Response{% else %}Submit Response{% endif %}
+                        </button>
+                    </form>
+
+                    <hr>
+
+                    <a href="{% if complaint.target_role == 'doctor' %}{{ url_for('admin.complaints_doctors') }}
+                              {% elif complaint.target_role == 'lab' %}{{ url_for('admin.complaints_labs') }}
+                              {% elif complaint.target_role == 'pharmacist' %}{{ url_for('admin.complaints_pharmacists') }}
+                              {% else %}{{ url_for('admin.complaints') }}{% endif %}"
+                        class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

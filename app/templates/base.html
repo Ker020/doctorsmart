@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Smart Healthcare</title>
+    <!-- Bootstrap CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <!-- Custom Theme CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css', v='3.5') }}" rel="stylesheet">
+    <style>
+        /* Allow body to remain scrollable when modals are open */
+        body.modal-open {
+            overflow: auto !important;
+            padding-right: 0 !important;
+        }
+
+        /* Standardize backdrop behavior */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-backdrop {
+            display: none !important;
+        }
+    </style>
+    <!-- Markdown Parser -->
+    <script src="{{ url_for('static', filename='js/marked.min.js', v='3.4') }}"></script>
+    <script src="{{ url_for('static', filename='js/sweetalert2.all.min.js', v='3.4') }}"></script>
+
+    <script>
+        function killBackdrops() {
+            // Remove lingering backdrops
+            document.querySelectorAll('.modal-backdrop, [class*="backdrop"], [class*="overlay"]').forEach(el => el.remove());
+
+            // Force reset body state
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            // For older bootstrap versions or specific edge cases
+            const backdrops = document.getElementsByClassName('modal-backdrop');
+            while (backdrops.length > 0) {
+                backdrops[0].parentNode.removeChild(backdrops[0]);
+            }
+        }
+
+        // Listen for all Bootstrap modal hide events
+        document.addEventListener('hidden.bs.modal', function () {
+            // Slight delay ensures Bootstrap finishes its own cleanup first
+            setTimeout(killBackdrops, 50);
+        });
+
+        // Fail-safe: also check on click (in case backdrop doesn't close modal)
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                setTimeout(killBackdrops, 300);
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <!-- Floating Background Icons -->
+    <div class="floating-shapes">
+        <div class="shape"><i class="bi bi-heart-pulse-fill"></i></div>
+        <div class="shape"><i class="bi bi-capsule"></i></div>
+        <div class="shape"><i class="bi bi-hospital"></i></div>
+        <div class="shape"><i class="bi bi-bandaid"></i></div>
+        <div class="shape"><i class="bi bi-activity"></i></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="bi bi-heart-pulse me-2"></i>Smart Healthcare</a>
+            <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'patient' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('patient.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('lab_booking.search') }}">Book Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('patient.ratings') }}">Evaluations</a>
+                    </li>
+                    {% elif current_user.role == 'doctor' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('doctor.dashboard') }}">Dashboard</a>
+                    </li>
+                    {% elif current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="{{ url_for('admin.complaints') }}">
+                            <i class="bi bi-exclamation-octagon-fill me-1"></i>Complaints
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if current_user.is_authenticated and current_user.role in ['doctor', 'pharmacist', 'lab',
+                    'admin'] %}
+                    <div class="dropdown me-3">
+                        <button class="btn btn-sm btn-outline-light dropdown-toggle rounded-pill px-3" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-person-badge me-1"></i>
+                            {% if session.get('active_role') == 'patient' %}
+                            <span class="text-info fw-bold">Viewing as Patient</span>
+                            {% else %}
+                            Viewing as {{ current_user.role.capitalize() }}
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px;">
+                            {% if session.get('active_role') == 'patient' %}
+                            <li>
+                                <a class="dropdown-item py-2"
+                                    href="{{ url_for('auth.switch_role', role=current_user.role) }}">
+                                    <i class="bi bi-arrow-left-right me-2 text-primary"></i>Back to {{
+                                    current_user.role.capitalize() }} Panel
+                                </a>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ url_for('auth.switch_role', role='patient') }}">
+                                    <i class="bi bi-person-bounding-box me-2 text-success"></i>View My Patient File
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <!-- Modern Theme Toggle -->
+                    <button class="btn btn-link text-white text-decoration-none me-3 p-0" id="themeToggle"
+                        title="Toggle Dark Mode">
+                        <i class="bi bi-moon-stars-fill fs-5" id="themeIcon"></i>
+                    </button>
+
+                    {% if current_user.is_authenticated %}
+                    <span class="text-white me-3 d-none d-md-block">{{ current_user.name }}</span>
+                    <a href="{{ url_for('chat.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 me-2"
+                        title="Chat System">
+                        <i class="bi bi-chat-dots-fill me-1"></i>Messages
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}"
+                        class="btn btn-outline-light btn-sm rounded-pill px-3">Logout</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Wrapped in Card -->
+    <div class="main-container container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="content-card">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js', v='3.4') }}"></script>
+
+    <!-- Theme Logic -->
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const currentTheme = localStorage.getItem('theme');
+
+        // Apply saved theme
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') {
+                themeIcon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+            }
+        }
+
+        // Toggle handling
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                let theme = document.documentElement.getAttribute('data-theme');
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+                }
+            });
+        }
+
+        // Initial cleanup on page load
+        document.addEventListener('DOMContentLoaded', killBackdrops);
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("/sw.js?v=" + new Date().getTime()).then(reg => { console.log("Service Worker registered", reg); reg.update(); })
+            });
+        }
+    </script>
+</body>
+
+</html>

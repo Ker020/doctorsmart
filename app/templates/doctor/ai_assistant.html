@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Smart - Clinical AI Assistant{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Work+Sans:wght@300;400;600;700&display=swap');
+
+    /* FORCED DARK THEME FOR DOCTOR AI */
+    :root {
+        --brand-primary: #2563eb;
+        --brand-secondary: #06b6d4;
+        --brand-accent: #22c55e;
+
+        --ai-bg-main: linear-gradient(135deg, #0a0e1a, #16213e, #0f3460);
+        --ai-bg-card: rgba(16, 27, 47, 0.95);
+        --ai-bg-glass: rgba(255, 255, 255, 0.04);
+
+        --ai-text-primary: #f8fafc;
+        --ai-text-secondary: #cbd5e1;
+        --ai-text-muted: #94a3b8;
+
+        --ai-border-soft: rgba(255, 255, 255, .12);
+        --ai-shadow-soft: 0 20px 40px rgba(0, 0, 0, .45);
+    }
+
+    /* Override Global Styles for this page */
+    body {
+        background: var(--ai-bg-main) !important;
+        background-attachment: fixed !important;
+        font-family: 'Work Sans', sans-serif;
+        color: var(--ai-text-primary) !important;
+    }
+
+    /* FIX: Force global content-card to be transparent on this page */
+    .content-card {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        color: var(--ai-text-primary) !important;
+    }
+
+    /* Target all text elements to force visibility */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    span,
+    li,
+    strong,
+    div,
+    .lead,
+    .text-secondary {
+        color: var(--ai-text-primary) !important;
+    }
+
+    .card {
+        background: var(--ai-bg-card) !important;
+        border-radius: 1.5rem !important;
+        box-shadow: var(--ai-shadow-soft) !important;
+        border: 1px solid var(--ai-border-soft) !important;
+        color: var(--ai-text-primary) !important;
+    }
+
+    .card-header {
+        background: rgba(0, 0, 0, 0.2) !important;
+        border-bottom: 1px solid var(--ai-border-soft) !important;
+        color: var(--ai-text-primary) !important;
+    }
+
+    .bg-glass {
+        background: var(--ai-bg-glass) !important;
+        backdrop-filter: blur(14px);
+        border: 1px solid var(--ai-border-soft) !important;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .form-control {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid var(--ai-border-soft) !important;
+        color: white !important;
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-color: var(--brand-primary) !important;
+    }
+
+    .text-muted,
+    .text-secondary {
+        color: var(--ai-text-muted) !important;
+    }
+
+    .text-success {
+        color: #4ade80 !important;
+    }
+
+    .text-danger {
+        color: #f87171 !important;
+    }
+
+    .text-info {
+        color: #38bdf8 !important;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="text-center mb-5">
+            <h1 class="display-4 gradient-text fw-bold">CLINICAL AI SUPPORT</h1>
+            <p class="lead">
+                Advanced diagnostic support and treatment recommendations.
+            </p>
+        </div>
+
+        <div class="card mb-4 border-0">
+            <div class="card-header p-3">
+                <span class="fw-bold"><i class="bi bi-journal-medical me-2"></i> Clinical Case Description</span>
+            </div>
+            <div class="card-body p-4">
+                <textarea id="caseInput" class="form-control mb-3" rows="5"
+                    placeholder="Describe patient age, symptoms, history, and vitals..."></textarea>
+
+                <button id="analyzeBtn" class="btn btn-primary btn-lg w-100 fw-bold p-3" onclick="analyzeCase()">
+                    <i class="bi bi-microscope me-2"></i> ANALYZE CLINICAL CASE
+                </button>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="d-none">
+
+            <!-- ENGLISH RESULTS -->
+            <div class="card mb-4 border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-robot me-2"></i> Clinical AI Insights <span
+                            class="badge bg-primary ms-2">English</span></h5>
+                </div>
+                <div class="card-body p-4">
+                    <h6 class="text-danger fw-bold mb-3">Differential Diagnosis</h6>
+                    <div id="diffListEn" class="mb-4"></div>
+
+                    <h6 class="text-success fw-bold mb-3">Recommended Medications</h6>
+                    <div id="medListEn" class="mb-4"></div>
+
+                    <h6 class="text-info fw-bold mb-3">Suggested Investigations (Labs/Imaging)</h6>
+                    <ul id="testListEn" class="list-unstyled"></ul>
+
+                    <h6 class="text-primary fw-bold mb-3 mt-4">Clinical Recommendations</h6>
+                    <ul id="recListEn" class="list-unstyled border-start border-primary ps-3"></ul>
+                </div>
+            </div>
+
+            <!-- ARABIC RESULTS -->
+            <div class="card mb-4 border-0" dir="rtl">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-robot ms-2"></i> التحليل السريري الذكي <span
+                            class="badge bg-success me-2">عربي</span></h5>
+                </div>
+                <div class="card-body p-4">
+                    <h6 class="text-danger fw-bold mb-3">التشخيص التفريقي</h6>
+                    <div id="diffListAr" class="mb-4"></div>
+
+                    <h6 class="text-success fw-bold mb-3">الأدوية المقترحة</h6>
+                    <div id="medListAr" class="mb-4"></div>
+
+                    <h6 class="text-info fw-bold mb-3">الفحوصات المطلوبة (تحاليل/أشعة)</h6>
+                    <ul id="testListAr" class="list-unstyled pe-3"></ul>
+
+                    <h6 class="text-primary fw-bold mb-3 mt-4">التوصيات السريرية</h6>
+                    <ul id="recListAr" class="list-unstyled border-end border-primary pe-3"></ul>
+                </div>
+                <div class="card-footer bg-transparent border-top border-secondary">
+                    <small class="text-muted"><i class="bi bi-info-circle ms-1"></i> للمساعدة في القرار الطبي فقط. يجب
+                        التحقق من المعايير الطبية.</small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function renderDocSection(diffId, medId, testId, recId, data) {
+        // 1. Diagnosis Probabilities
+        const diffList = document.getElementById(diffId);
+        diffList.innerHTML = '';
+        if (data.probabilities) {
+            data.probabilities.forEach(p => {
+                diffList.innerHTML += `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-bold">${p.name}</span>
+                            <span class="badge bg-danger">${p.prob}%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1)">
+                            <div class="progress-bar bg-danger" style="width: ${p.prob}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Medications
+        const medList = document.getElementById(medId);
+        medList.innerHTML = '';
+        if (data.medications && data.medications.length > 0) {
+            data.medications.forEach(m => {
+                medList.innerHTML += `
+                    <div class="p-3 border border-secondary rounded-3 mb-2 bg-glass">
+                        <strong class="text-success fs-5">${m.name}</strong>
+                        <div class="d-flex gap-3 mt-1 text-muted small">
+                            <span><i class="bi bi-capsule me-1"></i>${m.dosage || ''}</span>
+                            <span><i class="bi bi-clock me-1"></i>${m.duration || ''}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            medList.innerHTML = '<div class="text-muted small"><i class="bi bi-exclamation-circle me-1"></i> No specific medications suggested / لا توجد أدوية مقترحة</div>';
+        }
+
+        // 3. Tests
+        const testList = document.getElementById(testId);
+        testList.innerHTML = data.tests ? data.tests.map(t => `<li class="mb-2"><i class="bi bi-check-circle-fill text-info me-2"></i>${t}</li>`).join('') : '';
+
+        // 4. Recommendations
+        const recList = document.getElementById(recId);
+        recList.innerHTML = data.recommendations ? data.recommendations.map(r => `<li class="mb-2"><i class="bi bi-arrow-right-short me-1"></i>${r}</li>`).join('') : '';
+    }
+
+    async function analyzeCase() {
+        const input = document.getElementById('caseInput').value;
+        if (!input) return;
+
+        const btn = document.getElementById('analyzeBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing Case...';
+
+        try {
+            const res = await fetch("analyze/doctor", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input })
+            });
+            const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
+
+            document.getElementById('resultsSection').classList.remove('d-none');
+
+            if (data.english && data.arabic) {
+                renderDocSection('diffListEn', 'medListEn', 'testListEn', 'recListEn', data.english);
+                renderDocSection('diffListAr', 'medListAr', 'testListAr', 'recListAr', data.arabic);
+            } else {
+                // Fallback
+                renderDocSection('diffListEn', 'medListEn', 'testListEn', 'recListEn', data);
+            }
+
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Analysis Failed',
+                text: e.message,
+                confirmButtonColor: '#2563eb'
+            });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-microscope me-2"></i> ANALYZE CLINICAL CASE';
+        }
+    }
+</script>
+{% endblock %}

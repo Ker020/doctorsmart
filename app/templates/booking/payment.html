@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Navigation -->
+            <div class="mb-4">
+                <a href="{{ url_for('booking.search') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Doctor Search
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="card-header bg-primary text-white p-4" style="border-radius: 20px 20px 0 0;">
+                    <h4 class="mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Secure Payment</h4>
+                </div>
+                <div class="card-body p-4 p-md-5">
+
+                    <!-- Order Summary -->
+                    <div class="bg-light p-4 rounded-3 mb-4">
+                        <h5 class="text-primary fw-bold mb-3">Order Summary</h5>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Doctor:</span>
+                            <span class="fw-bold">Dr. {{ appointment.doctor.user.name }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Specialty:</span>
+                            <span>{{ appointment.doctor.specialty }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Date & Time:</span>
+                            <span class="fw-bold">{{ appointment.appointment_date.strftime('%A, %d %B %Y at %I:%M %p')
+                                }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 mb-0">Total Amount:</span>
+                            <span class="h4 text-success fw-bold mb-0">{{ appointment.doctor.price }} EGP</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form action="{{ url_for('booking.process_payment', appointment_id=appointment.id) }}" method="POST"
+                        id="paymentForm">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-muted">CARD NUMBER</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i
+                                        class="bi bi-credit-card"></i></span>
+                                <input type="text" name="card_number" class="form-control border-start-0 ps-0"
+                                    placeholder="0000 0000 0000 0000" maxlength="19" required id="cardNumber">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">EXPIRY DATE</label>
+                                <input type="text" name="expiry" class="form-control" placeholder="MM/YY" maxlength="5"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">CVV</label>
+                                <div class="input-group">
+                                    <input type="password" name="cvv" class="form-control" placeholder="123"
+                                        maxlength="3" required>
+                                    <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-muted">CARDHOLDER NAME</label>
+                            <input type="text" name="card_holder" class="form-control" placeholder="Name on Card"
+                                required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm"
+                            id="payButton">
+                            <span id="btnText">Pay {{ appointment.doctor.price }} EGP</span>
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+
+                        <div class="text-center mt-3">
+                            <small class="text-muted"><i class="bi bi-shield-lock-fill me-1"></i>Payments are secure and
+                                encrypted</small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple Card Formatting
+    document.getElementById('cardNumber').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = value;
+    });
+
+    document.getElementById('paymentForm').addEventListener('submit', function () {
+        const btn = document.getElementById('payButton');
+        const text = document.getElementById('btnText');
+        const spinner = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        text.textContent = 'Processing...';
+        spinner.classList.remove('d-none');
+    });
+</script>
+{% endblock %}

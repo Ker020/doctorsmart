@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="text-white mb-1">
+                <i class="bi bi-file-earmark-medical me-2"></i>My Medical Records
+            </h2>
+            <p class="text-white-50 mb-0">View your reports, prescriptions, and lab results</p>
+        </div>
+        <a href="{{ url_for('patient.dashboard') }}" class="btn btn-outline-light rounded-pill">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="col-12 mb-4">
+        <ul class="nav nav-pills nav-fill bg-white p-2 rounded-4 shadow-sm" id="medicalTabs" role="tablist"
+            style="--bs-bg-opacity: .1; backdrop-filter: blur(10px);">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill fw-bold" id="reports-tab" data-bs-toggle="tab"
+                    data-bs-target="#reports" type="button" role="tab">
+                    <i class="bi bi-file-text me-2"></i>Medical Reports
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-bold" id="prescriptions-tab" data-bs-toggle="tab"
+                    data-bs-target="#prescriptions" type="button" role="tab">
+                    <i class="bi bi-prescription2 me-2"></i>Prescriptions
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-bold" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs"
+                    type="button" role="tab">
+                    <i class="bi bi-clipboard-pulse me-2"></i>Lab Results
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="col-12">
+        <div class="tab-content" id="myTabContent">
+
+            <!-- Medical Reports Tab -->
+            <div class="tab-pane fade show active" id="reports" role="tabpanel">
+                {% if reports %}
+                <div class="row g-4">
+                    {% for report in reports %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm feature-card" style="border-radius: 15px;">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                                        <i class="bi bi-file-medical fs-4"></i>
+                                    </div>
+                                    <span class="badge bg-light text-dark rounded-pill">{{
+                                        report.created_at.strftime('%d %b %Y') }}</span>
+                                </div>
+                                <h5 class="fw-bold mb-2">{{ report.title }}</h5>
+                                <p class="text-muted small mb-3">Dr. {{ report.doctor.name if report.doctor else
+                                    'System' }}</p>
+                                <p class="text-truncate">{{ report.title }}</p>
+                                <button class="btn btn-primary btn-sm rounded-pill w-100 mt-2" data-bs-toggle="modal"
+                                    data-bs-target="#reportModal{{ report.id }}">
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View Report Modal -->
+                    <div class="modal fade" id="reportModal{{ report.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                <div class="modal-header border-0 bg-primary text-white">
+                                    <h5 class="modal-title fw-bold">Report Details</h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <h5 class="fw-bold mb-3">{{ report.title }}</h5>
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold text-uppercase">Diagnosis</label>
+                                        <p>{{ report.diagnosis or 'N/A' }}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold text-uppercase">Description</label>
+                                        <p>{{ report.description or 'N/A' }}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="small text-muted fw-bold text-uppercase">Recommendations</label>
+                                        <p>{{ report.recommendations or 'N/A' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-file-earmark-x display-1 text-white opacity-50"></i>
+                    <p class="text-white mt-3 lead">No medical reports found.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Prescriptions Tab -->
+            <div class="tab-pane fade" id="prescriptions" role="tabpanel">
+                {% if prescriptions %}
+                <div class="row g-4">
+                    {% for pres in prescriptions %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm feature-card" style="border-radius: 15px;">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
+                                        <i class="bi bi-capsule fs-4"></i>
+                                    </div>
+                                    <span
+                                        class="badge bg-{{ 'success' if pres.status == 'active' else 'secondary' }} rounded-pill">{{
+                                        pres.status|title }}</span>
+                                </div>
+                                <h5 class="fw-bold mb-1">Prescription #{{ pres.id }}</h5>
+                                <p class="text-muted small mb-3">Dr. {{ pres.doctor.name }} • {{
+                                    pres.created_at.strftime('%d %b %Y') }}</p>
+
+                                <div class="mb-3">
+                                    {% for med in pres.medications[:2] %}
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bi bi-dot text-primary"></i>
+                                        <small>{{ med.name }}</small>
+                                    </div>
+                                    {% endfor %}
+                                    {% if pres.medications|length > 2 %}
+                                    <small class="text-muted ps-3">+ {{ pres.medications|length - 2 }} more</small>
+                                    {% endif %}
+                                </div>
+
+                                <button class="btn btn-success btn-sm rounded-pill w-100 mt-2" data-bs-toggle="modal"
+                                    data-bs-target="#presModal{{ pres.id }}">
+                                    View Full Prescription
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prescription Modal -->
+                    <div class="modal fade" id="presModal{{ pres.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                <div class="modal-header border-0 bg-success text-white">
+                                    <h5 class="modal-title fw-bold">Prescription Details</h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="d-flex justify-content-between mb-4 border-bottom pb-3">
+                                        <div>
+                                            <h6 class="fw-bold">Dr. {{ pres.doctor.name }}</h6>
+                                            <small class="text-muted">{{ pres.doctor.specialty }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block">Date: {{ pres.created_at.strftime('%d %b
+                                                %Y') }}</small>
+                                            <small class="text-muted d-block">ID: #{{ pres.id }}</small>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="fw-bold mb-3"><i class="bi bi-capsule me-2 text-success"></i>Medications
+                                    </h6>
+                                    <div class="table-responsive mb-4">
+                                        <table class="table table-borderless bg-light rounded-3">
+                                            <thead class="text-muted small border-bottom">
+                                                <tr>
+                                                    <th class="ps-3">Medicine</th>
+                                                    <th>Dosage</th>
+                                                    <th>Freq</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for med in pres.medications %}
+                                                <tr>
+                                                    <td class="ps-3 fw-bold">{{ med.name }}</td>
+                                                    <td>{{ med.dosage }}</td>
+                                                    <td>{{ med.frequency }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {% if pres.instructions %}
+                                    <div class="alert alert-light border">
+                                        <i class="bi bi-info-circle me-2 text-primary"></i>
+                                        <strong>Instructions:</strong> {{ pres.instructions }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-capsule display-1 text-white opacity-50"></i>
+                    <p class="text-white mt-3 lead">No active prescriptions.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Lab Results Tab -->
+            <div class="tab-pane fade" id="labs" role="tabpanel">
+                {% if lab_tests %}
+                <div class="row g-4">
+                    {% for test in lab_tests %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm feature-card" style="border-radius: 15px;">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning">
+                                        <i class="bi bi-eyedropper fs-4"></i>
+                                    </div>
+                                    <span
+                                        class="badge bg-{{ 'success' if test.status == 'completed' else 'warning' }} rounded-pill">{{
+                                        test.status|title }}</span>
+                                </div>
+                                <h5 class="fw-bold mb-2">{{ test.test_name }}</h5>
+                                <p class="text-muted small mb-3">Ordered: {{ test.ordered_date.strftime('%d %b %Y') }}
+                                </p>
+
+                                <button class="btn btn-warning btn-sm rounded-pill w-100 mt-2 text-white"
+                                    data-bs-toggle="modal" data-bs-target="#labModal{{ test.id }}">
+                                    View Results
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lab Modal -->
+                    <div class="modal fade" id="labModal{{ test.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                <div class="modal-header border-0 bg-warning text-white">
+                                    <h5 class="modal-title fw-bold">Lab Test Results</h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <h5 class="fw-bold">{{ test.test_name }}</h5>
+                                    <p class="text-muted small mb-4">Type: {{ test.test_type }}</p>
+
+                                    {% if test.status == 'completed' %}
+                                    <!-- Image / File Display -->
+                                    {% if test.file_path %}
+                                    <div class="mb-3 text-center bg-light p-3 rounded-3 border">
+                                        {% if test.file_path.lower().endswith(('.png', '.jpg', '.jpeg')) %}
+                                        <img src="{{ url_for('static', filename='uploads/' + test.file_path) }}"
+                                            class="img-fluid rounded shadow-sm" style="max-height: 400px;"
+                                            alt="Medical Scan">
+                                        <a href="{{ url_for('static', filename='uploads/' + test.file_path) }}" download
+                                            class="btn btn-sm btn-outline-primary mt-2">
+                                            <i class="bi bi-download me-1"></i> Download Image
+                                        </a>
+                                        {% elif test.file_path.lower().endswith('.pdf') %}
+                                        <embed src="{{ url_for('static', filename='uploads/' + test.file_path) }}"
+                                            type="application/pdf" width="100%" height="500px" class="rounded border">
+                                        <a href="{{ url_for('static', filename='uploads/' + test.file_path) }}"
+                                            target="_blank" class="btn btn-primary rounded-pill mt-2">
+                                            <i class="bi bi-box-arrow-up-right me-2"></i> Open in New Tab
+                                        </a>
+                                        {% else %}
+                                        <i class="bi bi-file-earmark-pdf display-1 text-danger"></i>
+                                        <p class="mt-2 mb-2">{{ test.file_path }}</p>
+                                        <a href="{{ url_for('static', filename='uploads/' + test.file_path) }}"
+                                            target="_blank" class="btn btn-primary rounded-pill">
+                                            <i class="bi bi-eye me-2"></i> View Document
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="bg-light p-3 rounded-3 mb-3 border">
+                                        <h6 class="fw-bold mb-2">Technician Notes / Results:</h6>
+                                        <p class="mb-0 text-monospace">{{ test.results }}</p>
+                                    </div>
+                                    <small class="text-muted">Completed on: {{ test.completed_date.strftime('%d %b %Y')
+                                        }}</small>
+                                    {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-hourglass-split me-2"></i>Results are still pending.
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-clipboard-data display-1 text-white opacity-50"></i>
+                    <p class="text-white mt-3 lead">No lab results found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

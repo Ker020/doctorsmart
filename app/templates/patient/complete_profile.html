@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0 p-4" style="border-radius: 20px;">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-lines-fill display-4 text-primary"></i>
+                <h3 class="fw-bold mt-2">Complete Your Profile</h3>
+                <p class="text-muted">Fill in your medical details to access the patient dashboard.</p>
+            </div>
+            
+            <form action="{{ url_for('auth.complete_profile') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Date of Birth</label>
+                    <input type="date" name="dob" class="form-control" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Blood Type</label>
+                    <select name="blood_type" class="form-select">
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Weight (kg)</label>
+                        <input type="number" step="0.1" name="weight" class="form-control">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Height (cm)</label>
+                        <input type="number" step="0.1" name="height" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Chronic Diseases</label>
+                    <textarea name="chronic_diseases" class="form-control" rows="3" placeholder="Diabetes, Hypertension, etc."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold">
+                    Save Profile
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

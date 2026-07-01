@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with Filter Tabs -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-flag-fill text-danger me-2"></i>Complaints Management</h2>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if filter_role == 'all' %}active{% endif %}" href="{{ url_for('admin.complaints') }}">
+                <i class="bi bi-list-ul me-1"></i>All
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if filter_role == 'doctor' %}active{% endif %}"
+                href="{{ url_for('admin.complaints_doctors') }}">
+                <i class="bi bi-heart-pulse me-1"></i>Doctors
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if filter_role == 'lab' %}active{% endif %}"
+                href="{{ url_for('admin.complaints_labs') }}">
+                <i class="bi bi-hospital me-1"></i>Labs
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if filter_role == 'pharmacist' %}active{% endif %}"
+                href="{{ url_for('admin.complaints_pharmacists') }}">
+                <i class="bi bi-prescription2 me-1"></i>Pharmacists
+            </a>
+        </li>
+    </ul>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>Patient</th>
+                            <th>Target</th>
+                            <th>Subject</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        <tr>
+                            <td class="ps-4 text-nowrap">{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <div class="fw-bold">{{ complaint.user.name }}</div>
+                                <small class="text-muted">{{ complaint.user.email }}</small>
+                            </td>
+                            <td>
+                                {% if complaint.target_role %}
+                                <span class="badge 
+                                    {% if complaint.target_role == 'doctor' %}bg-info
+                                    {% elif complaint.target_role == 'lab' %}bg-success
+                                    {% elif complaint.target_role == 'pharmacist' %}bg-warning text-dark
+                                    {% endif %} rounded-pill">
+                                    {{ complaint.target_role | capitalize }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary rounded-pill">General</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-medium">{{ complaint.subject }}</td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 200px;"
+                                    title="{{ complaint.description }}">
+                                    {{ complaint.description }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if complaint.status == 'Responded' %}
+                                <span class="badge bg-primary rounded-pill">Responded</span>
+                                {% elif complaint.status == 'Resolved' %}
+                                <span class="badge bg-success rounded-pill">Resolved</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark rounded-pill">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{{ url_for('admin.view_complaint', complaint_id=complaint.id) }}"
+                                    class="btn btn-primary btn-sm rounded-pill">
+                                    <i class="bi bi-eye me-1"></i>View & Respond
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox display-6 d-block mb-3"></i>
+                                No complaints found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

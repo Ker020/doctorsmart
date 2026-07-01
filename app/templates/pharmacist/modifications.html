@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <a href="{{ url_for('pharmacist.dashboard') }}" class="btn btn-outline-light rounded-pill mb-3">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <h4 class="fw-bold text-white"><i class="bi bi-arrow-repeat me-2"></i>Modification Requests</h4>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 20px;">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Date</th>
+                                <th>Prescription</th>
+                                <th>Doctor</th>
+                                <th>Proposed Change</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if modifications %}
+                            {% for mod in modifications %}
+                            <tr>
+                                <td class="ps-4 text-muted small">{{ mod.created_at.strftime('%Y-%m-%d %I:%M %p') }}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('pharmacist.view_prescription', prescription_id=mod.prescription_id) }}"
+                                        class="text-decoration-none fw-bold">
+                                        #{{ mod.prescription_id }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='images/doctors/' + mod.prescription.doctor.profile_image) }}"
+                                            class="rounded-circle me-2" width="24" height="24"
+                                            onerror="this.src='{{ url_for('static', filename='images/default_doctor.png') }}'">
+                                        <span>dr. {{ mod.prescription.doctor.user.name }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <span class="text-danger text-decoration-line-through">{{
+                                            mod.original_medication }}</span>
+                                        <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                                        <span class="text-success fw-bold">{{ mod.proposed_medication }}</span>
+                                    </div>
+                                </td>
+                                <td class="small text-muted" style="max-width: 250px;">
+                                    {{ mod.pharmacist_notes | truncate(50) }}
+                                </td>
+                                <td>
+                                    {% if mod.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark rounded-pill">Pending</span>
+                                    {% elif mod.status == 'approved' %}
+                                    <span class="badge bg-success rounded-pill">Approved</span>
+                                    {% else %}
+                                    <span class="badge bg-danger rounded-pill">Rejected</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <img src="{{ url_for('static', filename='images/empty.svg') }}" width="100"
+                                        class="mb-3 opacity-25" onerror="this.style.display='none'">
+                                    <p class="text-muted mb-0">No active modification requests.</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

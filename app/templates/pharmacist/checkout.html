@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <a href="{{ url_for('pharmacist.dashboard') }}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-arrow-left me-2"></i>العودة للوحة التحكم (Back to Dashboard)
+        </a>
+    </div>
+
+    <form method="POST" id="checkoutForm">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="h3 mb-0 text-dark fw-bold"><i class="bi bi-cart3 me-2 text-primary"></i>سلة الأدوية (Checkout
+                    Cart)</h2>
+                <p class="text-muted small">إضافة مبيعات جديدة وخصم من المخزون تلقائياً.</p>
+            </div>
+            <span class="badge bg-primary rounded-pill px-3 py-2" id="itemCount">0 items</span>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <!-- Search & Add Section -->
+                        <div class="row g-2 mb-4">
+                            <div class="col-md-9 position-relative">
+                                <input type="text" id="drugInput" list="medicationList"
+                                    class="form-control form-control-lg"
+                                    placeholder="اكتب اسم الدواء هنا أو اختر من القائمة...">
+                                <datalist id="medicationList">
+                                    {% for med in medications %}
+                                    <option value="{{ med.name }}" data-id="{{ med.id }}" data-price="{{ med.price }}"
+                                        data-qty="{{ med.quantity }}">
+                                        {{ med.active_ingredient }} - السعر: {{ med.price }} - المتاح: {{ med.quantity
+                                        }}
+                                    </option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-primary btn-lg w-100" id="addItemBtn">
+                                    <i class="bi bi-plus-lg me-1"></i>إضافة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Cart Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" id="cartTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>الدواء</th>
+                                        <th style="width: 120px;">الكمية</th>
+                                        <th>السعر</th>
+                                        <th>الإجمالي</th>
+                                        <th style="width: 50px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cartBody">
+                                    {% for med in prefill_meds %}
+                                    <tr data-id="{{ med.id }}">
+                                        <td>
+                                            <div class="fw-bold">{{ med.name }}</div>
+                                            <input type="hidden" name="medication_id[]" value="{{ med.id }}">
+                                        </td>
+                                        <td>
+                                            <input type="number" name="quantity[]" class="form-control qty-input"
+                                                value="1" min="1" max="{{ med.quantity }}" data-price="{{ med.price }}">
+                                        </td>
+                                        <td>{{ med.price }} EGP</td>
+                                        <td class="item-total">{{ med.price }} EGP</td>
+                                        <td>
+                                            <button type="button" class="btn btn-link text-danger p-0 remove-item">
+                                                <i class="bi bi-x-circle fs-5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <div id="emptyCartMsg" class="text-center py-5 {{ " d-none" if prefill_meds else "" }}">
+                                <i class="bi bi-cart-x display-1 text-light"></i>
+                                <p class="text-muted mt-3">السلة فارغة. ابحث عن الأدوية أعلاه لإضافتها.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0">ملخص العملية (Order Summary)</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>الإجمالي قبل الخصم:</span>
+                            <span id="subtotal">0.00 EGP</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="h5 fw-bold text-dark">الإجمالي النهائي:</span>
+                            <span class="h5 fw-bold text-success" id="grandTotal">0.00 EGP</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">طريقة الدفع (Payment Method)</label>
+                            <div class="vstack gap-2">
+                                <input type="radio" class="btn-check" name="payment_method" id="visa" value="Visa"
+                                    required>
+                                <label class="btn btn-outline-primary" for="visa">
+                                    <i class="bi bi-credit-card me-2"></i> Visa
+                                </label>
+
+                                <input type="radio" class="btn-check" name="payment_method" id="cash" value="Cash">
+                                <label class="btn btn-outline-success" for="cash">
+                                    <i class="bi bi-cash me-2"></i> Cash
+                                </label>
+
+                                <input type="radio" class="btn-check" name="payment_method" id="instapay"
+                                    value="InstaPay">
+                                <label class="btn btn-outline-info" for="instapay">
+                                    <i class="bi bi-phone me-2"></i> InstaPay
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 py-3 mb-3 shadow-sm"
+                            id="submitSaleBtn">
+                            <i class="bi bi-check-circle me-2"></i>إتمام العملية
+                        </button>
+                        <a href="{{ url_for('pharmacist.inventory') }}"
+                            class="btn btn-link text-secondary w-100">إلغاء</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const drugInput = document.getElementById("drugInput");
+        const medicationList = document.getElementById("medicationList");
+        const addItemBtn = document.getElementById("addItemBtn");
+        const cartBody = document.getElementById("cartBody");
+        const emptyCartMsg = document.getElementById("emptyCartMsg");
+        const grandTotal = document.getElementById("grandTotal");
+        const subtotal = document.getElementById("subtotal");
+        const itemCount = document.getElementById("itemCount");
+
+        function getSelectedData(name) {
+            const options = medicationList.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === name) {
+                    return {
+                        id: options[i].getAttribute("data-id"),
+                        price: parseFloat(options[i].getAttribute("data-price")),
+                        qty: parseInt(options[i].getAttribute("data-qty"))
+                    };
+                }
+            }
+            return null;
+        }
+
+        function updateSummary() {
+            let total = 0;
+            let count = 0;
+            document.querySelectorAll(".qty-input").forEach(input => {
+                const price = parseFloat(input.getAttribute("data-price"));
+                const qty = parseInt(input.value);
+                total += price * qty;
+                count++;
+
+                const rowTotalSpan = input.closest("tr").querySelector(".item-total");
+                rowTotalSpan.textContent = (price * qty).toFixed(2) + " EGP";
+            });
+
+            grandTotal.textContent = total.toFixed(2) + " EGP";
+            subtotal.textContent = total.toFixed(2) + " EGP";
+            itemCount.textContent = count + " items";
+
+            if (count > 0) {
+                emptyCartMsg.classList.add("d-none");
+            } else {
+                emptyCartMsg.classList.remove("d-none");
+            }
+        }
+
+        addItemBtn.addEventListener("click", function () {
+            const name = drugInput.value;
+            const data = getSelectedData(name);
+
+            if (!data) {
+                alert("يرجى اختيار دواء صحيح من القائمة.");
+                return;
+            }
+
+            if (document.querySelector(`tr[data-id=\"${data.id}\"]`)) {
+                alert("هذا الدواء مضاف بالفعل للسلة.");
+                return;
+            }
+
+            const row = document.createElement("tr");
+            row.setAttribute("data-id", data.id);
+            row.innerHTML = `
+                <td>
+                    <div class=\"fw-bold\">${name}</div>
+                    <input type=\"hidden\" name=\"medication_id[]\" value=\"${data.id}\">
+                </td>
+                <td>
+                    <input type=\"number\" name=\"quantity[]\" class=\"form-control qty-input\" value=\"1\" min=\"1\" max=\"${data.qty}\" data-price=\"${data.price}\">
+                </td>
+                <td>${data.price.toFixed(2)} EGP</td>
+                <td class=\"item-total\">${data.price.toFixed(2)} EGP</td>
+                <td>
+                    <button type=\"button\" class=\"btn btn-link text-danger p-0 remove-item\">
+                        <i class=\"bi bi-x-circle fs-5\"></i>
+                    </button>
+                </td>
+            `;
+            cartBody.appendChild(row);
+
+            row.querySelector(".qty-input").addEventListener("input", updateSummary);
+            row.querySelector(".remove-item").addEventListener("click", function () {
+                row.remove();
+                updateSummary();
+            });
+
+            updateSummary();
+            drugInput.value = "";
+        });
+
+        document.querySelectorAll(".qty-input").forEach(input => {
+            input.addEventListener("input", updateSummary);
+        });
+        document.querySelectorAll(".remove-item").forEach(btn => {
+            btn.addEventListener("click", function () {
+                btn.closest("tr").remove();
+                updateSummary();
+            });
+        });
+
+        updateSummary();
+    });
+</script>
+
+<style>
+    .hover-scale {
+        transition: transform 0.2s;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.02);
+    }
+
+    #drugInput:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+{% endblock %}

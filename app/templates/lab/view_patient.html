@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Patient Profile Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow border-0 h-100">
+            <div class="card-body text-center p-4">
+                <img src="{{ url_for('static', filename='images/' + (patient.user.profile_image or 'default_avatar.png')) }}"
+                    class="rounded-circle mb-3 border shadow-sm" width="120" height="120" object-fit="cover">
+                <h4 class="mb-1 fw-bold">{{ patient.user.name }}</h4>
+                <p class="text-muted mb-2">Patient ID: #{{ patient.medical_id[:8] }}</p>
+
+                <hr class="my-3">
+
+                <div class="d-flex justify-content-between text-start px-3">
+                    <div>
+                        <small class="text-muted d-block">Age</small>
+                        <strong>{{ ((now() - patient.dob).days / 365) | int }} years</strong>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Blood Type</small>
+                        <strong>{{ patient.blood_type }}</strong>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Gender</small>
+                        <strong>{{ patient.gender or 'N/A' }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light text-center border-0 p-3">
+                <a href="{{ url_for('lab.dashboard') }}" class="btn btn-outline-secondary w-100 rounded-pill">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- History & Actions -->
+    <div class="col-md-8">
+        <!-- Upcoming Appointments -->
+        {% if appointments %}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-calendar-check me-2"></i>Pending Tests</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for appt in appointments %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold">{{ appt.service.test_type.name }}</h6>
+                                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{
+                                    appt.appointment_date.strftime('%d %b, %H:%M') }}</small>
+                            </div>
+                            <button class="btn btn-primary btn-sm rounded-pill" data-bs-toggle="modal"
+                                data-bs-target="#uploadModal{{ appt.id }}">
+                                <i class="bi bi-upload me-1"></i>Upload Result
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Modal -->
+                    <div class="modal fade" id="uploadModal{{ appt.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form action="{{ url_for('lab.upload_result', appointment_id=appt.id) }}" method="POST"
+                                    enctype="multipart/form-data">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Upload Result for {{ appt.service.test_type.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Result File (PDF/Image)</label>
+                                            <input type="file" name="file" class="form-control" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Technician Notes</label>
+                                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Upload & Complete</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Past History -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Lab History</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if history %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Date</th>
+                                <th>Test Name</th>
+                                <th>File</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for test in history %}
+                            <tr>
+                                <td class="ps-4 text-muted">{{ test.ordered_date.strftime('%Y-%m-%d') }}</td>
+                                <td class="fw-bold">{{ test.test_name }}</td>
+                                <td>
+                                    {% if test.file_path %}
+                                    <a href="{{ url_for('static', filename='uploads/' + test.file_path) }}"
+                                        target="_blank" class="btn btn-sm btn-outline-info rounded-pill">
+                                        <i class="bi bi-file-earmark-text me-1"></i>View
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><span
+                                        class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Completed</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center p-5 text-muted">
+                    <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
+                    No lab history found.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

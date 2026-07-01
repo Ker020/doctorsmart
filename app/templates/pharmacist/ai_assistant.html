@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Smart - Pharma AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="mb-3">
+            <a href="{{ url_for('pharmacist.dashboard') }}" class="btn btn-primary btn-sm rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="text-center mb-5">
+            <h1 class="display-4 gradient-text fw-bold">PHARMA AI <span
+                    class="badge bg-success fs-6 align-middle">v3.0</span></h1>
+            <p class="lead text-secondary">
+                Drug interaction analysis, alternatives, and dosage information.
+            </p>
+        </div>
+
+        <div class="card shadow-lg mb-4 border-0">
+            <div class="card-body p-4 bg-dark text-white">
+                <div class="input-group mb-3">
+                    <input type="text" id="drugInput"
+                        class="form-control bg-dark text-white border-secondary form-control-lg"
+                        placeholder="Enter medication name (e.g. Panadol)">
+                    <button id="analyzeBtn" class="btn btn-success" type="button" onclick="analyzeDrug()">
+                        <i class="fas fa-search me-2"></i> Analyze
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="d-none">
+            <!-- English Result -->
+            <div class="card shadow mb-4 border-0 bg-dark text-white">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary me-2">EN</span>
+                        <h5 class="d-inline mb-0 text-success" id="drugNameEn"></h5>
+                    </div>
+                    <span class="badge bg-secondary" id="activeIngEn"></span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 border-end border-secondary">
+                            <h6 class="text-warning"><i class="fas fa-pills me-2"></i>Dosage Guidelines</h6>
+                            <p id="dosageEn" class="text-secondary mb-1"></p>
+
+                            <h6 class="text-danger mt-3"><i class="fas fa-exclamation-circle me-2"></i>Allergy Warnings
+                            </h6>
+                            <ul id="allergyListEn" class="text-secondary small ps-3"></ul>
+
+                            <h6 class="text-warning mt-3"><i
+                                    class="fas fa-exclamation-triangle me-2"></i>Contraindications</h6>
+                            <ul id="contraListEn" class="text-secondary small ps-3"></ul>
+                        </div>
+                        <div class="col-md-6 ps-4">
+                            <h6 class="text-info"><i class="fas fa-exchange-alt me-2"></i>Alternatives / Generics</h6>
+                            <div id="altListEn" class="text-secondary"></div>
+
+                            <h6 class="text-warning mt-3"><i class="fas fa-notes-medical me-2"></i>Side Effects</h6>
+                            <ul id="sideEffectsListEn" class="text-secondary small ps-3"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arabic Result -->
+            <div class="card shadow mb-4 border-0 bg-dark text-white" dir="rtl">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-success ms-2">AR</span>
+                        <h5 class="d-inline mb-0 text-success" id="drugNameAr"></h5>
+                    </div>
+                    <span class="badge bg-secondary" id="activeIngAr"></span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 border-end-0 border-start border-secondary ps-4">
+                            <h6 class="text-warning"><i class="fas fa-pills ms-2"></i>الجرعة المقترحة</h6>
+                            <p id="dosageAr" class="text-secondary mb-1"></p>
+
+                            <h6 class="text-danger mt-3"><i class="fas fa-exclamation-circle ms-2"></i>تحذيرات الحساسية
+                            </h6>
+                            <ul id="allergyListAr" class="text-secondary small pe-3"></ul>
+
+                            <h6 class="text-warning mt-3"><i class="fas fa-exclamation-triangle ms-2"></i>موانع
+                                الاستخدام</h6>
+                            <ul id="contraListAr" class="text-secondary small pe-3"></ul>
+                        </div>
+                        <div class="col-md-6 pe-4">
+                            <h6 class="text-info"><i class="fas fa-exchange-alt ms-2"></i>البدائل / المثائل</h6>
+                            <div id="altListAr" class="text-secondary"></div>
+
+                            <h6 class="text-warning mt-3"><i class="fas fa-notes-medical ms-2"></i>الآثار الجانبية</h6>
+                            <ul id="sideEffectsListAr" class="text-secondary small pe-3"></ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-secondary text-end">
+                    <small class="text-muted"><i class="fas fa-info-circle ms-1"></i>للمعلومات الدوائية فقط. استشر
+                        الصيدلي أو الطبيب.</small>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function renderSection(lang, data, inputName) {
+                const suffix = lang === 'en' ? 'En' : 'Ar';
+
+                // Basic Info
+                // Use corrected name from AI if available, otherwise fallback to input
+                const correctedName = (data.active_ingredient && data.active_ingredient !== 'N/A') ? data.active_ingredient : inputName;
+                document.getElementById(`drugName${suffix}`).textContent = correctedName;
+                document.getElementById(`activeIng${suffix}`).textContent = data.active_ingredient || (lang === 'en' ? 'Unknown' : 'غير معروف');
+
+                // Dosage (Combine daily and mg if present, or just use dosage string)
+                let dosageText = data.dosage || data.dosage_daily || '';
+                if (data.dosage_mg) dosageText += ` (${data.dosage_mg})`;
+                document.getElementById(`dosage${suffix}`).textContent = dosageText || (lang === 'en' ? 'Consult doctor' : 'استشر الطبيب');
+
+                // Alternatives with Warnings
+                const altContainer = document.getElementById(`altList${suffix}`);
+                if (data.alternatives && data.alternatives.length > 0) {
+                    altContainer.innerHTML = data.alternatives.map(alt => {
+                        const name = typeof alt === 'string' ? alt : alt.name;
+                        const warnings = (typeof alt === 'object' && alt.warnings && alt.warnings.length > 0)
+                            ? alt.warnings.map(w => `<div class="text-danger small ms-2"><i class="fas fa-exclamation-triangle me-1"></i>${w}</div>`).join('')
+                            : '';
+
+                        return `<div class="mb-2">
+                    <div class="fw-bold text-info"><i class="fas fa-pills ${lang === 'en' ? 'me-2' : 'ms-2'}"></i>${name}</div>
+                    ${warnings}
+                </div>`;
+                    }).join('');
+                } else {
+                    altContainer.innerHTML = `<div class="text-muted">${lang === 'en' ? 'None found' : 'لا يوجد'}</div>`;
+                }
+
+                // Arrays
+                const renderList = (id, list, defaultText) => {
+                    const el = document.getElementById(id);
+                    el.innerHTML = list && list.length > 0
+                        ? list.map(item => `<li>${item}</li>`).join('')
+                        : `<li class="text-muted">${defaultText}</li>`;
+                };
+
+                renderList(`allergyList${suffix}`, data.allergy_warnings, lang === 'en' ? 'None specified' : 'لا يوجد');
+                renderList(`contraList${suffix}`, data.contraindications, lang === 'en' ? 'None' : 'لا يوجد');
+                renderList(`sideEffectsList${suffix}`, data.side_effects, lang === 'en' ? 'None reported' : 'لا يوجد');
+            }
+
+            async function analyzeDrug() {
+                const input = document.getElementById('drugInput').value;
+                if (!input) return;
+
+                const btn = document.getElementById('analyzeBtn');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analysis...';
+
+                try {
+                    // Hardcoded prefix to ensure Nginx routing matches
+                    const res = await fetch("analyze/pharmacist", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ input })
+                    });
+
+                    const text = await res.text();
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        if (text.includes("<!DOCTYPE html>")) {
+                            throw new Error("Session expired. Please refresh the page and login again.");
+                        }
+                        console.error("Raw server response:", text);
+                        throw new Error("Server returned invalid JSON. See console for details. Preview: " + text.substring(0, 100));
+                    }
+
+                    if (data.error) throw new Error(data.error);
+
+                    document.getElementById('resultsSection').classList.remove('d-none');
+
+                    // Check if bilingual
+                    if (data.english && data.arabic) {
+                        renderSection('en', data.english, input);
+                        renderSection('ar', data.arabic, input);
+                    } else {
+                        // Fallback for old/flat format
+                        renderSection('en', data, input);
+                        // For now, if no explicit arabic key, we assume flat response is English and clear Arabic or hide it.
+                        // But Prompt guarantees bilingual.
+                    }
+
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Analysis Failed',
+                        text: e.message,
+                        confirmButtonColor: '#11998e'
+                    });
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+        </script>
+
+        <style>
+            /* Force Dark Theme for this page */
+            body {
+                background: #0a0e1a !important;
+                color: #f8fafc !important;
+            }
+
+            .bg-dark {
+                background-color: #1a1a2e !important;
+            }
+
+            .card {
+                background-color: #16213e;
+                border: 1px solid #1f4068;
+            }
+
+            .gradient-text {
+                background: linear-gradient(to right, #11998e, #38ef7d);
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            label {
+                color: #f8fafc !important;
+            }
+        </style>
+        {% endblock %}

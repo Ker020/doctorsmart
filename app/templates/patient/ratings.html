@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="animate__animated animate__fadeInLeft"><i class="bi bi-star-fill text-warning me-2"></i>Evaluations &
+            Ratings / التقييمات والآراء</h2>
+    </div>
+
+    <!-- Ratings Feed -->
+    <div class="row g-4 mb-5">
+        {% for rating in ratings %}
+        <div class="col-md-6 col-lg-4 animate__animated animate__fadeInUp"
+            style="animation-delay: {{ loop.index0 * 0.1 }}s">
+            <div class="card h-100 shadow-sm border-0 hover-card rounded-3 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title text-primary fw-bold mb-0">
+                                <i class="bi bi-person-circle me-2"></i>{{ rating.doctor.user.name }}
+                            </h5>
+                            <small class="text-muted d-block mt-1">{{ rating.doctor.specialty }}</small>
+                        </div>
+                        <span class="badge bg-light text-dark shadow-sm">{{ rating.created_at.strftime('%Y-%m-%d')
+                            }}</span>
+                    </div>
+                    <div class="mb-3">
+                        {% for i in range(rating.stars) %}
+                        <i class="bi bi-star-fill text-warning"></i>
+                        {% endfor %}
+                        {% for i in range(5 - rating.stars) %}
+                        <i class="bi bi-star text-muted opacity-50"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="card-text text-secondary mb-4" style="line-height: 1.6;">"{{ rating.review }}"</p>
+                    <div class="pt-3 border-top text-end">
+                        <small class="text-muted fw-bold">By: {{ rating.patient.user.name }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="bg-light p-5 rounded-4 d-inline-block">
+                <i class="bi bi-stars text-muted display-1 d-block mb-3 opacity-25"></i>
+                <p class="h4 text-muted">No evaluations found yet.</p>
+                <p class="text-muted mb-0">Be the first to share your experience!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <hr class="my-5 border-0 bg-secondary opacity-10" style="height: 2px;">
+
+    <!-- Fixed Complaint Form Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-5 animate__animated animate__fadeInUp"
+                style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(0,0,0,0.05);">
+                <div class="card-header bg-danger text-white py-4 border-0">
+                    <div class="text-center">
+                        <h3 class="mb-1"><i class="bi bi-exclamation-octagon-fill me-2 pulse-icon"></i>Raise a Complaint
+                        </h3>
+                        <p class="mb-0 opacity-75">تقديم شكوى رسمية</p>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form action="{{ url_for('patient.submit_complaint') }}" method="POST">
+                        <div class="row g-4">
+                            <!-- Category Selection -->
+                            <div class="col-md-6">
+                                <label for="target_role" class="form-label fw-bold text-dark mb-2">
+                                    <i class="bi bi-grid-fill me-2 text-danger"></i>Category / التصنيف
+                                </label>
+                                <select class="form-select form-select-lg border-1 rounded-3 shadow-sm" id="target_role"
+                                    name="target_role" required onchange="toggleTargetLists()">
+                                    <option value="" selected disabled>Select Category / اختر الفئة</option>
+                                    <option value="doctor">Doctor / طبيب</option>
+                                    <option value="lab">Laboratory / معمل تحاليل</option>
+                                    <option value="pharmacist">Pharmacist / صيدلي</option>
+                                </select>
+                            </div>
+
+                            <!-- Manual Entity Name Input -->
+                            <div class="col-md-6" id="target_selection_container" style="display: none;">
+                                <label for="target_name" class="form-label fw-bold text-dark mb-2">
+                                    <i class="bi bi-building-fill me-2 text-danger"></i>Entity Name / اسم الجهة
+                                </label>
+                                <input type="text" class="form-control form-control-lg border-1 rounded-3 shadow-sm"
+                                    id="target_name" name="target_name"
+                                    placeholder="Type the name / أكتب اسم الطبيب أو المعمل">
+                            </div>
+
+                            <!-- Hidden field for compatibility -->
+                            <input type="hidden" name="target_id" value="">
+
+                            <!-- Subject -->
+                            <div class="col-12">
+                                <label for="subject" class="form-label fw-bold text-dark mb-2">
+                                    <i class="bi bi-info-circle-fill me-2 text-danger"></i>Subject / الموضوع
+                                </label>
+                                <input type="text" class="form-control form-control-lg border-1 rounded-3 shadow-sm"
+                                    id="subject" name="subject" required
+                                    placeholder="e.g., Unprofessional behavior / مثلاً: سلوك غير مهني">
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <label for="description" class="form-label fw-bold text-dark mb-2">
+                                    <i class="bi bi-chat-left-text-fill me-2 text-danger"></i>Complaint Details / تفاصيل
+                                    الشكوى
+                                </label>
+                                <textarea class="form-control border-1 rounded-3 shadow-sm" id="description"
+                                    name="description" rows="6" required
+                                    placeholder="Please describe your issue in detail... / يرجى كتابة تفاصيل الشكوى..."></textarea>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="col-12 mt-5 text-center">
+                                <button type="submit"
+                                    class="btn btn-danger btn-lg px-5 py-3 shadow border-0 rounded-pill transition-all float-button">
+                                    <i class="bi bi-shield-fill-check me-2"></i>Submit Official Complaint / تقديم شكوى
+                                    رسمية
+                                </button>
+                                <p class="text-muted small mt-3"><i class="bi bi-lock-fill me-1"></i>Your information is
+                                    handled securely and confidentially.</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleTargetLists() {
+        const role = document.getElementById('target_role').value;
+        const container = document.getElementById('target_selection_container');
+        const targetNameInput = document.getElementById('target_name');
+
+        if (role) {
+            container.style.display = 'block';
+            targetNameInput.setAttribute('required', 'required');
+            targetNameInput.disabled = false;
+        } else {
+            container.style.display = 'none';
+            targetNameInput.removeAttribute('required');
+            targetNameInput.disabled = true;
+        }
+    }
+</script>
+
+<style>
+    .hover-card {
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .hover-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.1);
+    }
+
+    .transition-all {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .float-button {
+        background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+        border: none;
+    }
+
+    .float-button:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 12px 24px rgba(220, 53, 69, 0.3) !important;
+        filter: brightness(1.1);
+    }
+
+    .pulse-icon {
+        display: inline-block;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+{% endblock %}

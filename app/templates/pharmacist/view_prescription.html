@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="mb-4">
+            <a href="{{ url_for('pharmacist.dashboard') }}" class="btn btn-primary rounded-pill px-4 shadow-sm mb-2">
+                <i class="bi bi-house me-2"></i>Dashboard (الرئيسية)
+            </a>
+            <a href="{{ url_for('pharmacist.view_patient_prescriptions', patient_id=prescription.patient.id) }}"
+                class="btn btn-outline-light rounded-pill px-4 ms-2">
+                <i class="bi bi-arrow-left me-2"></i>Back to Patient List
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+            <!-- Header -->
+            <div class="bg-primary text-white p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="fw-bold mb-1">Prescription Details (تفاصيل الروشتة)</h4>
+                        <p class="mb-0 opacity-75">ID: #{{ prescription.id }} • {{
+                            prescription.created_at.strftime("%Y-%m-%d %I:%M %p") }}</p>
+                    </div>
+                    <span class="badge bg-white text-primary rounded-pill px-4 py-2 fs-6 shadow-sm">
+                        {{ prescription.status.capitalize() }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="row mb-4">
+                    <div class="col-md-6 border-end">
+                        <h6 class="text-uppercase text-muted fw-bold mb-3 small">Patient Information</h6>
+                        <h5 class="fw-bold mb-1">{{ prescription.patient.name }}</h5>
+                        <p class="text-muted small mb-0">Age: {{ prescription.patient.age }} | Gender: {{
+                            prescription.patient.gender }}</p>
+                    </div>
+                    <div class="col-md-6 ps-md-4">
+                        <h6 class="text-uppercase text-muted fw-bold mb-3 small">Doctor Information</h6>
+                        <h5 class="fw-bold mb-1">Dr. {{ prescription.doctor.name }}</h5>
+                        <p class="text-muted small mb-0">Requested on: {{ prescription.created_at.strftime("%B %d, %Y")
+                            }}</p>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Medications List -->
+                <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-capsule me-2 text-primary"></i>Medications Analysis
+                    (تحليل الروشتة)</h5>
+
+                <form id="billingForm" action="{{ url_for('pharmacist.checkout') }}" method="GET">
+                    <div class="table-responsive mb-4 rounded-3 border">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;" class="ps-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="selectAll">
+                                        </div>
+                                    </th>
+                                    <th>Drug Name</th>
+                                    <th>Status (الحالة)</th>
+                                    <th>Stock</th>
+                                    <th>Price</th>
+                                    <th class="text-end pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in analysis %}
+                                <tr class="{{ " table-danger" if not item.in_stock else "" }}">
+                                    <td class="ps-3">
+                                        {% if item.in_stock %}
+                                        <div class="form-check">
+                                            <input type="checkbox" name="med_id" value="{{ item.inv_id }}"
+                                                class="form-check-input drug-check">
+                                        </div>
+                                        {% else %}
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" disabled>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ item.billing_name }}</div>
+                                        {% if item.is_modified %}
+                                        <span class="badge bg-warning text-dark small py-1">Modified (تم التعديل)</span>
+                                        {% endif %}
+                                        <div class="small text-muted">{{ item.active_ingredient or "N/A" }}</div>
+                                    </td>
+                                    <td>
+                                        {% if item.in_stock %}
+                                        <span class="text-success small fw-bold"><i
+                                                class="bi bi-check-circle-fill me-1"></i>Available</span>
+                                        {% else %}
+                                        <span class="text-danger small fw-bold"><i
+                                                class="bi bi-x-circle-fill me-1"></i>Out of Stock</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.stock_qty }} Units</td>
+                                    <td>{{ item.price }} EGP</td>
+                                    <td class="text-end pe-3">
+                                        {% if not item.in_stock %}
+                                        <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3"
+                                            onclick="showAlternatives('{{ item.prescribed_name }}', '{{ item.active_ingredient }}')">
+                                            Find Alt
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" id="billSelectedBtn"
+                            disabled>
+                            <i class="bi bi-cart-check me-2"></i>Bill Selected (صرف المختار)
+                        </button>
+                        <button type="button" class="btn btn-warning rounded-pill px-4 shadow-sm" data-bs-toggle="modal"
+                            data-bs-target="#modifyModal">
+                            <i class="bi bi-pencil-square me-2"></i>Request Modification
+                        </button>
+                        <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm"
+                            onclick="window.print()">
+                            <i class="bi bi-printer me-2"></i>Print
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts for select all and button state -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectAll = document.getElementById("selectAll");
+        const drugChecks = document.querySelectorAll(".drug-check");
+        const billBtn = document.getElementById("billSelectedBtn");
+
+        function updateBtnState() {
+            const anyChecked = Array.from(drugChecks).some(c => c.checked);
+            billBtn.disabled = !anyChecked;
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener("change", function () {
+                drugChecks.forEach(c => c.checked = this.checked);
+                updateBtnState();
+            });
+        }
+
+        drugChecks.forEach(c => {
+            c.addEventListener("change", updateBtnState);
+        });
+    });
+
+    function showAlternatives(name, active) {
+        // Fill the hidden inputs in the modification modal
+        document.getElementById("original_medication").value = name;
+        document.querySelector("#modifyModal textarea").value = "Alternative for " + name + " (" + active + ")";
+        var modal = new bootstrap.Modal(document.getElementById("modifyModal"));
+        modal.show();
+    }
+</script>
+
+{% include "pharmacist/_modals.html" %}
+{% endblock %}

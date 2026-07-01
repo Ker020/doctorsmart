@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>تعديل بيانات الدواء</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">الاسم التجاري (Brand Name)</label>
+                            <input type="text" name="name" class="form-control" value="{{ med.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">المادة الفعالة (Active Ingredient)</label>
+                            <input type="text" name="active_ingredient" class="form-control"
+                                value="{{ med.active_ingredient }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الآثار الجانبية (Side Effects)</label>
+                            <textarea name="side_effects" class="form-control"
+                                rows="3">{{ med.side_effects }}</textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الكمية (Quantity)</label>
+                                <input type="number" name="quantity" class="form-control" value="{{ med.quantity }}"
+                                    required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">السعر (Price)</label>
+                                <input type="number" step="0.01" name="price" class="form-control"
+                                    value="{{ med.price }}" required>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg">تحديث البيانات</button>
+                            <a href="{{ url_for('pharmacist.inventory') }}" class="btn btn-outline-secondary">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

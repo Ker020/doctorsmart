@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0" style="border-radius: 20px;">
+                <div class="card-header bg-primary text-white text-center py-4" style="border-radius: 20px 20px 0 0;">
+                    <h3 class="mb-0 fw-bold">Secure Payment</h3>
+                    <p class="mb-0 opacity-75">Analysis Booking: {{ appointment.service.test_type.name }}</p>
+                </div>
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="display-4 fw-bold text-primary mb-2">{{ appointment.service.price }} EGP</div>
+                        <p class="text-muted">{{ appointment.lab.name }}</p>
+                    </div>
+
+                    <form action="{{ url_for('lab_booking.process_payment', appointment_id=appointment.id) }}" method="POST" id="payment-form">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Card Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+                                <input type="text" class="form-control" placeholder="0000 0000 0000 0000" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Expiry Date</label>
+                                <input type="text" class="form-control" placeholder="MM/YY" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">CVV</label>
+                                <input type="text" class="form-control" placeholder="123" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Cardholder Name</label>
+                            <input type="text" class="form-control" placeholder="John Doe" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold py-3" id="pay-button">
+                            <span id="button-text">Pay Now</span>
+                            <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" height="20" class="me-3">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" height="20">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('payment-form').addEventListener('submit', function() {
+        document.getElementById('button-text').innerText = 'Processing...';
+        document.getElementById('spinner').classList.remove('d-none');
+        document.getElementById('pay-button').disabled = true;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Back to Dashboard Button -->
+    <a href="{{ url_for('patient.dashboard') }}" class="btn btn-primary rounded-pill px-4 mb-3">
+        <i class="bi bi-arrow-left me-2"></i><span class="text-dark fw-bold">Back to Dashboard</span>
+    </a>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Submit Complaint</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('patient.submit_complaint') }}">
+                        <!-- Target Role Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Complaint Against <span
+                                    class="text-danger">*</span></label>
+                            <select name="target_role" id="targetRole" class="form-select" required
+                                onchange="loadTargets()">
+                                <option value="">Select...</option>
+                                <option value="doctor">Doctor</option>
+                                <option value="lab">Laboratory</option>
+                                <option value="pharmacist">Pharmacist</option>
+                            </select>
+                        </div>
+
+                        <!-- Optional: Specific Target -->
+                        <div class="mb-3" id="specificTargetDiv" style="display: none;">
+                            <label class="form-label">Specific Target (Optional)</label>
+                            <select name="target_id" id="targetId" class="form-select">
+                                <option value="">General Complaint</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Subject <span class="text-danger">*</span></label>
+                            <input type="text" name="subject" class="form-control" placeholder="Brief subject" required>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            <textarea name="description" class="form-control" rows="5"
+                                placeholder="Describe your complaint in detail..." required></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send-fill me-1"></i>Submit Complaint
+                            </button>
+                            <a href="{{ url_for('patient.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const doctors = {{ doctors | tojson }};
+    const labs = {{ labs | tojson }};
+    const pharmacists = {{ pharmacists | tojson }};
+
+    function loadTargets() {
+        const role = document.getElementById('targetRole').value;
+        const targetSelect = document.getElementById('targetId');
+        const targetDiv = document.getElementById('specificTargetDiv');
+
+        targetSelect.innerHTML = '<option value="">General Complaint</option>';
+
+        if (!role) {
+            targetDiv.style.display = 'none';
+            return;
+        }
+
+        targetDiv.style.display = 'block';
+        let items = [];
+
+        if (role === 'doctor') {
+            items = doctors;
+            items.forEach(doc => {
+                targetSelect.innerHTML += `<option value="${doc.id}">Dr. ${doc.user.name} - ${doc.specialty}</option>`;
+            });
+        } else if (role === 'lab') {
+            items = labs;
+            items.forEach(lab => {
+                targetSelect.innerHTML += `<option value="${lab.id}">${lab.name}</option>`;
+            });
+        } else if (role === 'pharmacist') {
+            items = pharmacists;
+            items.forEach(pharm => {
+                targetSelect.innerHTML += `<option value="${pharm.id}">${pharm.user.name} - ${pharm.pharmacy_name}</option>`;
+            });
+        }
+    }
+</script>
+{% endblock %}

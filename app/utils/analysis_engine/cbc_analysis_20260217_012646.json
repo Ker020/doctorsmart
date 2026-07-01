@@ -1,0 +1,132 @@
+{
+    "patient_summary": {
+        "patient_name": "Ahmed Hassan",
+        "patient_id": null,
+        "age": 29,
+        "gender": "male",
+        "pregnant": false,
+        "test_date": null,
+        "lab_name": null
+    },
+    "test_results": {
+        "RBC": {
+            "test_name": "RBC",
+            "value": 3.8,
+            "unit": "x10^6/µL",
+            "reference_range": {
+                "min": 4.5,
+                "max": 5.9
+            },
+            "status": "Low",
+            "deviation_percentage": 15.56
+        },
+        "WBC": {
+            "test_name": "WBC",
+            "value": 13.5,
+            "unit": "x10^3/µL",
+            "reference_range": {
+                "min": 4.0,
+                "max": 11.0
+            },
+            "status": "High",
+            "deviation_percentage": 22.73
+        },
+        "Platelets": {
+            "test_name": "Platelets",
+            "value": 420.0,
+            "unit": "x10^3/µL",
+            "reference_range": {
+                "min": 150.0,
+                "max": 400.0
+            },
+            "status": "High",
+            "deviation_percentage": 5.0
+        },
+        "MCV": {
+            "test_name": "MCV",
+            "value": 72.0,
+            "unit": "fL",
+            "reference_range": {
+                "min": 80.0,
+                "max": 100.0
+            },
+            "status": "Low",
+            "deviation_percentage": 10.0
+        },
+        "MCH": {
+            "test_name": "MCH",
+            "value": 24.0,
+            "unit": "pg",
+            "reference_range": {
+                "min": 27.0,
+                "max": 33.0
+            },
+            "status": "Low",
+            "deviation_percentage": 11.11
+        }
+    },
+    "abnormal_parameters": [
+        {
+            "test_name": "WBC",
+            "value": 13.5,
+            "expected_range": "4.0 - 11.0",
+            "status": "High",
+            "deviation_percentage": 22.73,
+            "clinical_significance": "ممكن يكون فيه عدوى أو التهاب في الجسم"
+        },
+        {
+            "test_name": "RBC",
+            "value": 3.8,
+            "expected_range": "4.5 - 5.9",
+            "status": "Low",
+            "deviation_percentage": 15.56,
+            "clinical_significance": "عدد كريات الدم الحمراء قليل - ممكن تحس بتعب"
+        },
+        {
+            "test_name": "MCH",
+            "value": 24.0,
+            "expected_range": "27.0 - 33.0",
+            "status": "Low",
+            "deviation_percentage": 11.11,
+            "clinical_significance": "يحتاج تقييم طبي"
+        },
+        {
+            "test_name": "MCV",
+            "value": 72.0,
+            "expected_range": "80.0 - 100.0",
+            "status": "Low",
+            "deviation_percentage": 10.0,
+            "clinical_significance": "كريات الدم صغيرة - غالباً نقص حديد"
+        },
+        {
+            "test_name": "Platelets",
+            "value": 420.0,
+            "expected_range": "150.0 - 400.0",
+            "status": "High",
+            "deviation_percentage": 5.0,
+            "clinical_significance": "ممكن خطر تجلط - يحتاج متابعة"
+        }
+    ],
+    "risk_score": 13,
+    "severity_level": "Low",
+    "detected_patterns": [
+        {
+            "condition": "Possible Acute Infection or Inflammation",
+            "confidence": 70,
+            "supporting_findings": [
+                "Elevated WBC (13.5 x10^3/µL)"
+            ],
+            "suggested_specialty": "Internal Medicine / الباطنة",
+            "arabic_name": "احتمال وجود عدوى أو التهاب حاد"
+        }
+    ],
+    "suggested_specialty": "Internal Medicine / الباطنة",
+    "arabic_explanation": "📊 **شرح نتيجة التحليل**\n\n📋 **ملخص النتائج:**\n• إجمالي التحاليل: 5\n• طبيعي: 0 ✅\n• غير طبيعي: 5 ⚠️\n\n🔍 **التحاليل اللي محتاجة انتباه:**\n\n• **WBC**: 13.5\n  📈 أعلى من الطبيعي (المفروض: 4.0 - 11.0)\n  💡 ممكن يكون فيه عدوى أو التهاب في الجسم\n\n• **RBC**: 3.8\n  📉 أقل من الطبيعي (المفروض: 4.5 - 5.9)\n  💡 عدد كريات الدم الحمراء قليل - ممكن تحس بتعب\n\n• **MCH**: 24.0\n  📉 أقل من الطبيعي (المفروض: 27.0 - 33.0)\n  💡 يحتاج تقييم طبي\n\n• **MCV**: 72.0\n  📉 أقل من الطبيعي (المفروض: 80.0 - 100.0)\n  💡 كريات الدم صغيرة - غالباً نقص حديد\n\n• **Platelets**: 420.0\n  📈 أعلى من الطبيعي (المفروض: 150.0 - 400.0)\n  💡 ممكن خطر تجلط - يحتاج متابعة\n\n🧠 **التقييم الطبي المبدئي:**\n\n• **احتمال وجود عدوى أو التهاب حاد**\n  📊 احتمالية: 70%\n  🔬 بناءً على:\n    - Elevated WBC (13.5 x10^3/µL)\n\n⚠️ **تقييم الخطورة:** 13%\n📊 **مستوى الخطورة:** منخفض\n\n💊 **التوصيات:**\n\n• راجع دكتور عادي للمتابعة\n• مفيش داعي للقلق، بس متابعة روتينية\n\n👨‍⚕️ **التخصص المقترح:** الباطنة\n\n──────────────────────────────────────────────────\n⚠️ **ملحوظة مهمة:**\nده تقييم أولي بيساعدك تفهم النتيجة، لكن **مش بديل عن استشارة الدكتور**.\nالدكتور هو اللي يقدر يشخص ويعمل خطة علاج مناسبة ليك.\n",
+    "english_summary": "📋 **COMPLETE BLOOD COUNT (CBC) ANALYSIS REPORT**\n\n**Patient Information:**\nName: Ahmed Hassan\nAge: 29 years | Gender: Male\n\n**RESULTS SUMMARY:**\nTotal Parameters Tested: 5\nWithin Normal Range: 0\nAbnormal Values: 5\n\n**ABNORMAL FINDINGS:**\n\n📈 **Elevated Values:**\n• WBC: 13.5 (Expected: 4.0 - 11.0)\n• Platelets: 420.0 (Expected: 150.0 - 400.0)\n\n📉 **Decreased Values:**\n• RBC: 3.8 (Expected: 4.5 - 5.9)\n• MCH: 24.0 (Expected: 27.0 - 33.0)\n• MCV: 72.0 (Expected: 80.0 - 100.0)\n\n**CLINICAL INTERPRETATION:**\n\n1. **Possible Acute Infection or Inflammation** (Confidence: 70%)\n   Supporting Findings:\n   • Elevated WBC (13.5 x10^3/µL)\n   Suggested Specialty: Internal Medicine\n\n**RISK ASSESSMENT:**\nCalculated Risk Score: 13/100\nSeverity Level: Low\n\n**CLINICAL RECOMMENDATIONS:**\n• Schedule routine follow-up with primary care physician\n• Consider lifestyle modifications if applicable\n\n──────────────────────────────────────────────────────────────────────\n**IMPORTANT NOTICE:**\nThis analysis is for informational purposes only and does not constitute\nmedical advice, diagnosis, or treatment. Please consult with a qualified\nhealthcare professional for proper medical evaluation and management.\n",
+    "recommendations": [
+        "Schedule a routine follow-up with your doctor",
+        "Monitor your symptoms",
+        "Discuss possible acute infection or inflammation with your physician"
+    ],
+    "visual_risk": "🟢 Low Risk\n██░░░░░░░░░░░░░░░░░░ 13%"
+}

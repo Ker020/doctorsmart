@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-shuffle me-2 text-info"></i>بدائل دواء: <span class="text-primary">{{ med.name }}</span>
+        </h2>
+        <a href="{{ url_for('pharmacist.inventory') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>العودة للمخزون
+        </a>
+    </div>
+
+    <div class="alert alert-info shadow-sm bg-white border-info">
+        <h5 class="mb-1 text-info"><i class="bi bi-info-circle me-2"></i>المادة الفعالة: <strong>{{
+                med.active_ingredient }}</strong></h5>
+        <div class="text-muted small">هذه هي البدائل المتاحة التي تحتوي على نفس المادة الفعالة:</div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for alt in alternatives %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 hover-scale">
+                <div class="card-body">
+                    <h5 class="card-title text-primary fw-bold">{{ alt.name }}</h5>
+                    <p class="card-text text-muted mb-2"><i class="bi bi-tag me-1"></i>{{ alt.active_ingredient }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge {{ " bg-danger" if alt.quantity < 5 else "bg-success" }}">
+                            متاح: {{ alt.quantity }}
+                        </span>
+                        <span class="h5 mb-0 text-success fw-bold">{{ alt.price }} EGP</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pb-3 hstack gap-2">
+                    <a href="{{ url_for('pharmacist.edit_medication', id=alt.id) }}"
+                        class="btn btn-sm btn-outline-warning w-100">تعديل</a>
+                    <a href="{{ url_for('pharmacist.checkout') }}" class="btn btn-sm btn-success w-100">شراء</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="h4 text-muted">لا يوجد بدائل متاحة حالياً في المخزون.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
